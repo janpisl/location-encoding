@@ -92,7 +92,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     """
     # reload weights from restore_file if specified
     try:
-        logging.info("Restoring parameters from {}".format(config['restore_file_path']))
+        print(f"Restoring parameters from {config['restore_file_path']}")
         utils.load_checkpoint(config['restore_file_path'], model, optimizer)
     except KeyError:
         pass
@@ -100,10 +100,14 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     best_val_acc = 0.0
 
     epochs = config['hyperparams']['epochs']
+    epochs_since_last_best = 0
+    early_stopping_patience = config['hyperparams']['early_stopping_patience']
 
     for epoch in range(epochs):
-        # Run one epoch
-        logging.info("Epoch {}/{}".format(epoch + 1, epochs))
+
+        if epochs_since_last_best > early_stopping_patience:
+            print(f'No improvement for {early_stopping_patience} epochs. Early stopping')
+            break
 
         # compute number of batches in one epoch (one full pass over the training set)
         train(model, optimizer, loss_fn, train_dataloader, device, config)
@@ -121,27 +125,23 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
                                'optim_dict': optimizer.state_dict()},
                               is_best=is_best,
                               out_folder=model_dir)
+        
+        epochs_since_last_best += 1
 
         if is_best:
-            logging.info("- Found new best accuracy")
             best_val_acc = val_acc
+            epochs_since_last_best = 0
 
 
 def main(config):
-    # Set the logger
-    try:
-        utils.set_logger(config['logfile_path'])
-    except KeyError:
-        pass
 
-    if  config['wandb']['log_to_wandb']:
+
+    if config['wandb']['log_to_wandb']:
         wandb.init(
             project=config['wandb']['project'], 
             group=config['wandb']['group'],
             reinit=True
         )
-
-    logging.info("Loading the datasets...")
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -152,28 +152,29 @@ def main(config):
     val_dl = dataloaders['val']
    
     #check how many images there are in one sampleid folder 
-    num_images = len(os.listdir(
-        os.path.join(
-            config['data']['image_folder'],
-            str(train_dl.dataset.img_labels.iloc[0].sampleid)
+    num_images = len(
+        os.listdir(
+            os.path.join(
+                config['data']['image_folder'],
+                str(train_dl.dataset.img_labels.iloc[0].sampleid)
+                )
         )
-    ))
+    )
     
-    logging.info("- done.")
-
     # Define the model and optimizer
-    model = get_model(config, num_images, output_classes=9) #TODO: Do i need to change to CUDA?
+    model = get_model(config, num_images, output_classes=9) 
     model = model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'])
     loss_fn = nn.CrossEntropyLoss(reduction='mean')
 
-
+    #TODO: replace with actual wandb_id
     model_dir = os.path.join(config['data']['output_folder'], 'wandb_id')
-
-
+    
+    with open(os.path.join(model_dir, 'config.json'), 'w') as sink:
+        json.dump(config, sink)
+    
     # Train the model
-    #logging.info("Starting training")
     train_and_evaluate(model, train_dl, val_dl, optimizer, loss_fn, config, device, model_dir)
 
 
@@ -193,10 +194,10 @@ if __name__ == '__main__':
     print(f"{len(permutations_dicts)} variant(s) of config")
 
     for variant in permutations_dicts:
-            config['hyperparams'] = variant
-            utils.seed_everything(config['hyperparams']['seed'])
-            parsed_config = utils.parse_boolean_recursion(config)
-            main(config)  
+        config['hyperparams'] = variant
+        utils.seed_everything(config['hyperparams']['seed'])
+        config = utils.parse_boolean_recursion(config)
+        main(config)  
 
  
 

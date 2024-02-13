@@ -63,7 +63,7 @@ def compute_and_log_metrics(targets_batches, preds_batches, dataset_name, log_to
        
     log_dict = {}
     log_dict[f'{dataset_name} accuracy'] = metrics['accuracy']
-    log_dict[f'{dataset_name}l macro f1-score'] = metrics['macro avg']['f1-score']
+    log_dict[f'{dataset_name} macro f1-score'] = metrics['macro avg']['f1-score']
     log_dict[f'{dataset_name} conf matrix'] = wandb.Image(conf_matrix_image)
     if losses:
         metrics['loss'] = sum(losses)/len(losses)

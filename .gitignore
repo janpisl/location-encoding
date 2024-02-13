@@ -1,0 +1,8 @@
+data/
+models_trained/
+wandb/
+__pycache__/
+*/__pycache__/
+
+last_idx.txt
+logs.txt

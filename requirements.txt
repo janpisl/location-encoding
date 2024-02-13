@@ -1,0 +1,7 @@
+numpy
+Pillow
+torch
+tqdm
+torchvision
+pandas
+geopandas

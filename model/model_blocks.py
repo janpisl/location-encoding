@@ -202,8 +202,6 @@ def get_resnet(resnet_type, **kwargs):
     else:
         raise ValueError("Unknown resnet type")
 
-    #TODO: test if it's better to spread the RGB weights as opposed to just init the first layer from scratch
-
     if pretrained: # Create a convlayer and spread the RGB pretrained weights to as many channels as there in the inputs
         net = set_up_pretrained_resnet(net, in_channels=kwargs['hyperparams']['in_channels'])  
     else: #Create a convlayer and initialize its weights

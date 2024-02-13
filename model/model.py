@@ -30,11 +30,9 @@ class DriverClassifier(nn.Module):
         self.return_att_scores = return_att_scores
      
     def forward(self, x):
+        
         feat_extractor_outputs = self.feat_extractor(x)
-        try:
-            output = self.classifier(feat_extractor_outputs['features'])
-        except:
-            pdb.set_trace()
+        output = self.classifier(feat_extractor_outputs['features'])
 
         if self.return_att_scores:
             # Keep the contents from the feature extractor (may include att_scores) except for features which we don't want to keep

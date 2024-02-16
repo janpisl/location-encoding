@@ -5,13 +5,14 @@ This script downloads images from Earth Engine according to given parameters.
 
 Example of use:
 
-python download_images.py   --save_path data/images/dataset_small/\
+python download_images.py   --save_path data/images/dataset_small/twelve_images_twelve_bands\
     --sensor S2\
     --sample_points_path data/labels/dataset_small/labels.csv\
+    --bands S2\
     --start_date 2022-01-01\
     --end_date 2023-01-01\
     --num_workers 32 \
-    --period_length 3M\
+    --period_length 1M\
     --buffer 600\
     --processing_level TOA \
     --target_shape 120 120
@@ -39,7 +40,7 @@ import geopandas as gpd
 from rasterio.enums import Resampling
 
 
-LAST_IDX_LOGFILE = "last_idx.txt"
+LAST_IDX_LOGFILE = "misc/last_idx.txt"
 
 
 BANDS = {
@@ -454,7 +455,7 @@ if __name__ == '__main__':
     parser.add_argument('--end_date', type=str, default='2021-01-01')
     parser.add_argument('--period_length', type=str, default='12M')
     parser.add_argument('--target_shape', nargs='+', type=int, default=(151,151))
-    parser.add_argument('--logs_file', type=str, default='logs.txt')
+    parser.add_argument('--logs_file', type=str, default='misc/logs.txt')
     
 
     args = parser.parse_args()

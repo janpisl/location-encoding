@@ -3,6 +3,9 @@ models_trained/
 wandb/
 __pycache__/
 */__pycache__/
+misc/
+
+*/.ipynb_checkpoints/
 
 last_idx.txt
 logs.txt

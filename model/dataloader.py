@@ -23,38 +23,21 @@ class NormalizeGEEImages(Module):
 
 
 class SelectBands(Module):       
-    def __init__(self,band_indices=[True, True, True, True, False]): #The default is RGBNIR (without the QA60 band)
+    def __init__(self,band_indices=None): 
         super(SelectBands, self).__init__()
 
-        self.band_indices = band_indices
+        if band_indices:
+            self.band_indices = band_indices
+        else:
+            self.band_indices = [True, True, True, True, False] #The default is RGBNIR (without the QA60 band)
 
     def forward(self, img):
+
         #in temporal case, the first dimension is temporal - band indices are 2nd
         if len(img.shape) == 3:
             return img[self.band_indices]
         elif len(img.shape) == 4:
             return img[:, self.band_indices]
-
-
-### TODO: Modify transforms to what i need
-train_transform = transforms.Compose([
-    transforms.CenterCrop(100),
-    SelectBands(),
-    NormalizeGEEImages(),
-    transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
-    ])  
-
-# loader for evaluation, no horizontal flip
-eval_transform = transforms.Compose([
-    transforms.CenterCrop(100),
-    SelectBands(),
-    NormalizeGEEImages(),
-    ])  
- 
-    #transforms.Resize(64),  # resize the image to 64x64 (remove if images are already 64x64)
-
-
-
 
 
 
@@ -64,12 +47,31 @@ def fetch_dataloader(types, config):
 
     Args:
         types: (list) has one or more of 'train', 'val', 'test' depending on which data is required
-        data_dir: (string) directory containing the dataset
         config: (dict) configuration file
 
     Returns:
         data: (dict) contains the DataLoader object for each type in types
     """
+
+    try:
+        band_indices = config['hyperparams']['band_indices']
+    except KeyError:
+        band_indices = None
+
+    train_transform = transforms.Compose([
+        transforms.CenterCrop(100),
+        SelectBands(band_indices),
+        NormalizeGEEImages(),
+        transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
+        ])  
+
+    eval_transform = transforms.Compose([
+        transforms.CenterCrop(100),
+        SelectBands(band_indices),
+        NormalizeGEEImages(),
+        ])  
+    
+
     dataloaders = {}
 
     def seed_worker(worker_id):
@@ -83,17 +85,16 @@ def fetch_dataloader(types, config):
 
     for split in ['train', 'val', 'test']:
         if split in types:
-            #TODO: continue when data split exists
-            
+           
             annotation = pd.read_csv(config['data']['annotation_file'])
 
-            # use the train_transformer if training data, else use eval_transformer without random flip
             if split == 'train':
                 dl = DataLoader(
                     DriverDataset(
                         annotation.loc[annotation.split == split].reset_index(drop=True), 
                         config['data']['image_folder'],
                         transform=train_transform,
+                        model_type=config['hyperparams']['model_type']
                         ), 
                     batch_size=config['hyperparams']['batch_size'], 
                     shuffle=True,
@@ -109,6 +110,7 @@ def fetch_dataloader(types, config):
                         annotation.loc[annotation.split == split].reset_index(drop=True), 
                         config['data']['image_folder'],
                         transform=eval_transform,
+                        model_type=config['hyperparams']['model_type']
                         ), 
                     batch_size=config['hyperparams']['batch_size'], 
                     shuffle=False,

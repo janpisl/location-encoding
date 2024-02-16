@@ -7,6 +7,8 @@ import logging
 import os
 import itertools
 import pdb
+from pathlib import Path
+
 import wandb
 import numpy as np
 import torch
@@ -133,15 +135,24 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             epochs_since_last_best = 0
 
 
+def initialize_wandb(config, model, train_dl, val_dl):
+    wandb.init(
+        project=config['wandb']['project'], 
+        group=config['wandb']['group'],
+        reinit=True
+    )
+
+    log_config = {}
+    log_config['# parameters'] = utils.count_parameters(model)
+
+    log_config['train dst size'] = len(train_dl.dataset)
+    log_config['val dst size'] = len(val_dl.dataset)
+
+    wandb.config.update(log_config)
+
+    return wandb.run.id
+
 def main(config):
-
-
-    if config['wandb']['log_to_wandb']:
-        wandb.init(
-            project=config['wandb']['project'], 
-            group=config['wandb']['group'],
-            reinit=True
-        )
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -160,17 +171,28 @@ def main(config):
                 )
         )
     )
-    
+
+    n_classes = 9
+
     # Define the model and optimizer
-    model = get_model(config, num_images, output_classes=9) 
+    model = get_model(config, num_images, output_classes=n_classes) 
     model = model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'])
     loss_fn = nn.CrossEntropyLoss(reduction='mean')
 
-    #TODO: replace with actual wandb_id
-    model_dir = os.path.join(config['data']['output_folder'], 'wandb_id')
-    
+
+
+    if config['wandb']['log_to_wandb']:
+        run_id = initialize_wandb(config, model, train_dl, val_dl)
+    else:
+        run_id = 'wandb_id'
+
+    #Temp:
+    #run_id = 'wandb_id'
+    model_dir = os.path.join(config['data']['output_folder'], f'{run_id}')
+    Path(model_dir).mkdir(parents=True, exist_ok=True)
+
     with open(os.path.join(model_dir, 'config.json'), 'w') as sink:
         json.dump(config, sink)
     

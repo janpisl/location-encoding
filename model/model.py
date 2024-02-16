@@ -53,6 +53,9 @@ def get_model(config, num_images, output_classes):
     #if not model_name:
     #    model_name = config['model']    
 
-
-    return DriverClassifier(num_images, output_classes=output_classes, **config)
-
+    if config['hyperparams']['model_type'] == 'monotemporal':
+        return get_resnet(config['hyperparams']['backbone'], output_classes, **config)
+    elif config['hyperparams']['model_type'] == 'multitemporal':
+        return DriverClassifier(num_images, output_classes=output_classes, **config)
+    else:
+        raise ValueError('unknown model type')

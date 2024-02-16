@@ -1,0 +1,32 @@
+{
+    
+
+    "data": {
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_small_v2/labels.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_small/three_images/",
+        "output_folder":  "models_trained/"
+    },
+
+    "hyperparams" :{
+        "seed": [424],
+        "batch_size": [64],
+        "learning_rate": [0.0005],
+        "epochs": [1000],
+        "weight_decay": [0.002],
+        "randomize_labels": ["False"],
+        "model_type": ["loc_encoder"],
+        "positional_embedding": ["direct"],
+        "backbone": ["resnet18"],
+        "pretrained_backbone" : ["True"],
+        "in_channels": [4],
+        "early_stopping_patience": [50]
+    },
+
+
+    "wandb": {
+        "log_to_wandb" : "True",
+        "project" : "project_2",
+        "entity" : "janpisl",
+        "group": ""
+    }
+}

@@ -9,7 +9,7 @@ from torch.nn import Module
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-from model.dataset import DriverDataset
+from model.dataset import DriverDataset, LocationDataset
 
 
 
@@ -53,23 +53,26 @@ def fetch_dataloader(types, config):
         data: (dict) contains the DataLoader object for each type in types
     """
 
-    try:
-        band_indices = config['hyperparams']['band_indices']
-    except KeyError:
-        band_indices = None
+    if config['hyperparams']['model_type'] == 'loc_encoder':
+        pass #No need for transforms
+    else:
+        try:
+            band_indices = config['hyperparams']['band_indices']
+        except KeyError:
+            band_indices = None
 
-    train_transform = transforms.Compose([
-        transforms.CenterCrop(100),
-        SelectBands(band_indices),
-        NormalizeGEEImages(),
-        transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
-        ])  
+        train_transform = transforms.Compose([
+            transforms.CenterCrop(100),
+            SelectBands(band_indices),
+            NormalizeGEEImages(),
+            transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
+            ])  
 
-    eval_transform = transforms.Compose([
-        transforms.CenterCrop(100),
-        SelectBands(band_indices),
-        NormalizeGEEImages(),
-        ])  
+        eval_transform = transforms.Compose([
+            transforms.CenterCrop(100),
+            SelectBands(band_indices),
+            NormalizeGEEImages(),
+            ])  
     
 
     dataloaders = {}
@@ -89,38 +92,64 @@ def fetch_dataloader(types, config):
             annotation = pd.read_csv(config['data']['annotation_file'])
 
             if split == 'train':
-                dl = DataLoader(
-                    DriverDataset(
-                        annotation.loc[annotation.split == split].reset_index(drop=True), 
-                        config['data']['image_folder'],
-                        transform=train_transform,
-                        model_type=config['hyperparams']['model_type']
-                        ), 
-                    batch_size=config['hyperparams']['batch_size'], 
-                    shuffle=True,
-                    num_workers=32,
-                    pin_memory=True,
-                    worker_init_fn=seed_worker,
-                    generator=g,
-                    )
-            
+                if config['hyperparams']['model_type'] == 'loc_encoder':
+                    dl = DataLoader(
+                        LocationDataset(
+                            annotation.loc[annotation.split == split].reset_index(drop=True), 
+                            ), 
+                        batch_size=config['hyperparams']['batch_size'], 
+                        shuffle=True,
+                        num_workers=32,
+                        pin_memory=True,
+                        worker_init_fn=seed_worker,
+                        generator=g,
+                        )  
+                else:                  
+                    dl = DataLoader(
+                        DriverDataset(
+                            annotation.loc[annotation.split == split].reset_index(drop=True), 
+                            config['data']['image_folder'],
+                            transform=train_transform,
+                            model_type=config['hyperparams']['model_type']
+                            ), 
+                        batch_size=config['hyperparams']['batch_size'], 
+                        shuffle=True,
+                        num_workers=32,
+                        pin_memory=True,
+                        worker_init_fn=seed_worker,
+                        generator=g,
+                        )
             else:
-                dl = DataLoader(
-                    DriverDataset(
-                        annotation.loc[annotation.split == split].reset_index(drop=True), 
-                        config['data']['image_folder'],
-                        transform=eval_transform,
-                        model_type=config['hyperparams']['model_type']
-                        ), 
-                    batch_size=config['hyperparams']['batch_size'], 
-                    shuffle=False,
-                    num_workers=32,
-                    pin_memory=True,
-                    worker_init_fn=seed_worker,
-                    generator=g,
-                    )
+                if config['hyperparams']['model_type'] == 'loc_encoder':
+                    dl = DataLoader(
+                        LocationDataset(
+                            annotation.loc[annotation.split == split].reset_index(drop=True), 
+                            ), 
+                        batch_size=config['hyperparams']['batch_size'], 
+                        shuffle=False,
+                        num_workers=32,
+                        pin_memory=True,
+                        worker_init_fn=seed_worker,
+                        generator=g,
+                        )                
+                else:
+                    dl = DataLoader(
+                        DriverDataset(
+                            annotation.loc[annotation.split == split].reset_index(drop=True), 
+                            config['data']['image_folder'],
+                            transform=eval_transform,
+                            model_type=config['hyperparams']['model_type']
+                            ), 
+                        batch_size=config['hyperparams']['batch_size'], 
+                        shuffle=False,
+                        num_workers=32,
+                        pin_memory=True,
+                        worker_init_fn=seed_worker,
+                        generator=g,
+                        )
 
             dataloaders[split] = dl
+
 
     return dataloaders
 

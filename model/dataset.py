@@ -6,7 +6,7 @@ import rasterio
 import pandas as pd
 from torch import Tensor
 from torch.utils.data import Dataset
-
+import geopandas as gpd
 
 LABEL_MAPPING = {
     'pasture' : 0, 
@@ -84,3 +84,42 @@ class DriverDataset(Dataset):
             label = self.target_transform(label)    
 
         return image_data, label
+    
+
+
+
+
+
+
+
+class LocationDataset(Dataset):
+    def __init__(self, 
+                 annotations_file, 
+                 **kwargs):
+    
+        self.img_labels = annotations_file if isinstance(annotations_file, pd.DataFrame) else pd.read_csv(annotations_file)
+        self.img_labels['geometry'] = gpd.GeoSeries.from_wkt(self.img_labels['geometry'])
+        #Randomly swapping filenames 
+        #print(" ----  Randomizing labels! ---- ")
+        #self.img_labels['driver'] = self.img_labels[['driver']].sample(frac=1, random_state=1).reset_index(drop=True)
+
+
+        try:
+            self.model_type = kwargs['model_type']
+        except KeyError:
+            self.model_type = None
+
+
+    def __len__(self):
+        return len(self.img_labels)
+
+
+
+    def __getitem__(self, idx):
+
+        lat, lon = self.img_labels.iloc[idx].geometry.y, self.img_labels.iloc[idx].geometry.x
+        x = torch.Tensor([lat, lon])
+        class_name = self.img_labels.driver.iloc[idx]
+        label = LABEL_MAPPING[class_name]  
+
+        return x, label

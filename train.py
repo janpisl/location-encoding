@@ -182,7 +182,7 @@ def main(config):
     model = get_model(config, num_images, output_classes=n_classes) 
     model = model.to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'])
+    optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
     loss_fn = nn.CrossEntropyLoss(reduction='mean')
 
 

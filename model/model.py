@@ -12,6 +12,12 @@ import copy
 from typing import List
 
 from model.model_blocks import *
+from model.loc_encoder import LocationDriverClassifier
+
+
+
+
+
 
 
 class DriverClassifier(nn.Module):
@@ -45,7 +51,6 @@ class DriverClassifier(nn.Module):
 
 
 
-
 def get_model(config, num_images, output_classes):
     #if 'in_channels' not in config.keys():
     #    in_channels = len(config['bands'])
@@ -57,5 +62,9 @@ def get_model(config, num_images, output_classes):
         return get_resnet(config['hyperparams']['backbone'], output_classes, **config)
     elif config['hyperparams']['model_type'] == 'multitemporal':
         return DriverClassifier(num_images, output_classes=output_classes, **config)
+    elif config['hyperparams']['model_type'] == 'loc_encoder':
+        return LocationDriverClassifier(output_classes=output_classes, positional_embedding=config['hyperparams']['positional_embedding'], **config)
+        
+
     else:
         raise ValueError('unknown model type')

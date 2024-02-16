@@ -17,7 +17,9 @@ LABEL_MAPPING = {
     'mining': 5,
     'urban': 6,
     'cocoa': 7,
-    'rubber': 8
+    'rubber': 8,
+    'forest regrowth': 9,
+    'shifting agriculture': 10
 }
 
 

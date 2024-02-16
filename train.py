@@ -9,6 +9,7 @@ import itertools
 import pdb
 from pathlib import Path
 
+import pandas as pd
 import wandb
 import numpy as np
 import torch
@@ -156,6 +157,9 @@ def main(config):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+    n_classes = len(np.unique(pd.read_csv(config['data']['annotation_file']).driver ))
+    
+
     # fetch dataloaders
     dataloaders = dataloader.fetch_dataloader(
         ['train', 'val'], config)
@@ -171,8 +175,8 @@ def main(config):
                 )
         )
     )
+    
 
-    n_classes = 9
 
     # Define the model and optimizer
     model = get_model(config, num_images, output_classes=n_classes) 

@@ -189,7 +189,7 @@ class AttentionFeatureExtractor(TemporalFeatureExtractor):
 
 
 
-def get_resnet(resnet_type, output_classes=9, **kwargs):
+def get_resnet(resnet_type, output_classes=11, **kwargs):
 
     pretrained = kwargs['hyperparams']['pretrained_backbone']
 

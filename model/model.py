@@ -64,7 +64,12 @@ def get_model(config, num_images, output_classes):
         return DriverClassifier(num_images, output_classes=output_classes, **config)
     elif config['hyperparams']['model_type'] == 'loc_encoder':
         return LocationDriverClassifier(output_classes=output_classes, positional_embedding=config['hyperparams']['positional_embedding'], **config)
-        
+    elif config['hyperparams']['model_type'] == 'img+loc':
+        #loc_enc = LocationDriverClassifier(output_classes=output_classes, positional_embedding=config['hyperparams']['positional_embedding'], **config)
+        #img_enc = DriverClassifier(num_images, output_classes=output_classes, **config)
+        #multimodal_model = MultiModal(loc_enc, img_enc, **config)
+        raise NotImplementedError("")
+                
 
     else:
         raise ValueError('unknown model type')

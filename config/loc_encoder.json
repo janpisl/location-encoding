@@ -2,8 +2,8 @@
     
 
     "data": {
-        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_small_v2/labels.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_small/three_images/",
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v3/labels.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v3/four_images",
         "output_folder":  "models_trained/"
     },
 

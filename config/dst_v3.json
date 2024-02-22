@@ -14,8 +14,8 @@
         "epochs": [1000],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
-        "model_type": ["monotemporal"],
-        "backbone": ["resnet18"],
+        "model_type": ["monotemporal", "multitemporal"],
+        "backbone": ["resnet34"],
         "pretrained_backbone" : ["True"],
         "in_channels": [4],
         "early_stopping_patience": [50]

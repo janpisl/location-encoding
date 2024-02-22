@@ -15,7 +15,7 @@
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "model_type": ["loc_encoder"],
-        "positional_embedding": ["direct"],
+        "positional_embedding": ["cartesian3d", "wrap", "direct"],
         "backbone": ["resnet18"],
         "pretrained_backbone" : ["True"],
         "in_channels": [4],

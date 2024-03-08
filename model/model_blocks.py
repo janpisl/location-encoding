@@ -215,6 +215,8 @@ def get_resnet(resnet_type, output_classes=11, **kwargs):
     
 
     net.fc = nn.Linear(net.fc.in_features, out_features=output_classes, bias = True) # The number of output classes doesn't matter, it will get re-initialized
+        
+
 
     return net
 

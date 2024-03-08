@@ -110,7 +110,8 @@ def fetch_dataloader(types, config):
                             annotation.loc[annotation.split == split].reset_index(drop=True), 
                             config['data']['image_folder'],
                             transform=train_transform,
-                            model_type=config['hyperparams']['model_type']
+                            model_type=config['hyperparams']['model_type'],
+                            **config
                             ), 
                         batch_size=config['hyperparams']['batch_size'], 
                         shuffle=True,
@@ -138,7 +139,8 @@ def fetch_dataloader(types, config):
                             annotation.loc[annotation.split == split].reset_index(drop=True), 
                             config['data']['image_folder'],
                             transform=eval_transform,
-                            model_type=config['hyperparams']['model_type']
+                            model_type=config['hyperparams']['model_type'],
+                            **config
                             ), 
                         batch_size=config['hyperparams']['batch_size'], 
                         shuffle=False,

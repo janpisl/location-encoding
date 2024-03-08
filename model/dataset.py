@@ -7,6 +7,9 @@ import pandas as pd
 from torch import Tensor
 from torch.utils.data import Dataset
 import geopandas as gpd
+from scipy.ndimage import gaussian_filter
+
+
 
 LABEL_MAPPING = {
     'pasture' : 0, 
@@ -49,6 +52,11 @@ class DriverDataset(Dataset):
         except KeyError:
             self.model_type = None
 
+        self.use_forestloss = kwargs['hyperparams']['use_forestloss']
+        if self.use_forestloss:
+            self.forestloss_dir = kwargs['data']['forestloss_folder']
+
+
 
     def __len__(self):
         return len(self.img_labels)
@@ -82,6 +90,22 @@ class DriverDataset(Dataset):
             image_data = self.transform(image_data)
         if self.target_transform:
             label = self.target_transform(label)    
+        if self.use_forestloss:
+            path = os.path.join(self.forestloss_dir, f'{idx}.tif')
+            with rasterio.open(path) as source:
+                #data = source.read()
+                forestloss = source.read().astype('float').squeeze()
+                min_val = 2000
+                max_val = 2020
+                forestloss[(forestloss < min_val) | (forestloss > max_val)] = 0
+                forestloss[(forestloss >= min_val) & (forestloss <= max_val)] = 1
+
+                forestloss = gaussian_filter(forestloss, sigma=1)
+                forestloss = Tensor(forestloss)
+            
+
+            return image_data, label, forestloss
+
 
         return image_data, label
     

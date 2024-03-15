@@ -143,6 +143,19 @@ def load_dataset(dataset_name):
         }
 
 
+
+    elif dataset == 'worldcover':
+        dataset_prefix = 100000000
+        worldcover_folder = 'data/input_datasets/worldcover/'
+        
+        label_gdf = get_tiles_as_gdf(worldcover_folder)
+        dataset_extent = box(*label_gdf.total_bounds)
+        class_mapping = {
+            50 : 'urban',
+        }
+
+
+
     return dataset_prefix, class_mapping, label_gdf, dataset_extent
 
 
@@ -315,8 +328,6 @@ def main(
     gdf['driver'] = [class_mapping[val] for val in drivers]
     gdf['sampleid'] = sampleids
 
-    #np.unique(gdf.driver, return_counts=True)
-
     #forest_loss_years_list = [ (item_tuple[0].tolist(),item_tuple[1].tolist()) for item_tuple in forest_loss_years]
     #gdf['forest_loss_years'] = forest_loss_years_list
 
@@ -335,6 +346,7 @@ def main(
 
 if __name__ == '__main__':
 
+    print('starting')
     target_years = list(range(2000, 2020))
 
     patch_rows, patch_cols = 34, 34 #as close as possible to 1km square
@@ -349,14 +361,15 @@ if __name__ == '__main__':
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     datasets = [
-        'rubber',
-        'cocoa',
-        'mapbiomas',
-        'vancutsem_regrowth',
-        'laos_shifting_agriculture',
-        'coffee_maskell',
-        'mapbiomas_indonesia',
-        'palm_oil'
+        #'rubber',
+        #'cocoa',
+        #'mapbiomas',
+        #'vancutsem_regrowth',
+        #'laos_shifting_agriculture',
+        #'coffee_maskell',
+        #'mapbiomas_indonesia',
+        #'palm_oil', 
+        'worldcover'
         ]
 
 

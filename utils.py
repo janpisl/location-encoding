@@ -248,20 +248,24 @@ def get_tiles_as_gdf(dir):
     shapes = []
     filenames = []
     for filename in os.listdir(dir):
-        if not filename.endswith('.tif'):
-            continue
-
         try:
-            min_lat, max_lat, min_lon, max_lon = get_extent_from_filename(filename.split(".tif")[0])
-            polygon = Polygon([(min_lon, min_lat), (min_lon, max_lat), (max_lon, max_lat, ), (max_lon, min_lat )])
-        except AssertionError: #Unexpected name format - in that case, get the extent by reading the raster
-            path = os.path.join(dir, filename)
-            with rasterio.open(path) as src:
-                    bounds = src.bounds
-            polygon = box(*bounds)
         
-        shapes.append(polygon)
-        filenames.append(filename)
+            if not filename.endswith('.tif'):
+                continue
+
+            try:
+                min_lat, max_lat, min_lon, max_lon = get_extent_from_filename(filename.split(".tif")[0])
+                polygon = Polygon([(min_lon, min_lat), (min_lon, max_lat), (max_lon, max_lat, ), (max_lon, min_lat )])
+            except (AssertionError, ValueError) as e: #Unexpected name format - in that case, get the extent by reading the raster
+                path = os.path.join(dir, filename)
+                with rasterio.open(path) as src:
+                        bounds = src.bounds
+                polygon = box(*bounds)
+            
+            shapes.append(polygon)
+            filenames.append(filename)
+        except Exception as e:
+            print(filename,  "  ", e)
 
     gdf = gpd.GeoDataFrame(geometry=shapes)
     gdf['filename'] = [os.path.join(dir, filename) for filename in filenames]

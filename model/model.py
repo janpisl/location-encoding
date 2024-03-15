@@ -15,11 +15,6 @@ from model.model_blocks import *
 from model.loc_encoder import LocationDriverClassifier
 
 
-
-
-
-
-
 class DriverClassifier(nn.Module):
     def __init__(self, num_images, output_classes, return_att_scores=False, **kwargs):
         super(DriverClassifier, self).__init__()

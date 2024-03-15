@@ -4,7 +4,7 @@
     "data": {
         "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v3/labels.csv",
         "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v3/four_images",
-        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_patches/all",
+        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles_blurred",
         "output_folder":  "models_trained/"
     },
 

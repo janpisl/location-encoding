@@ -33,7 +33,6 @@ class DriverDataset(Dataset):
                  img_dir, 
                  transform, 
                  target_transform=None, 
-                 #TODO: include loading forest loss patch for given sample
                  **kwargs):
     
         self.img_dir = img_dir
@@ -93,18 +92,11 @@ class DriverDataset(Dataset):
         if self.use_forestloss:
             path = os.path.join(self.forestloss_dir, f'{idx}.tif')
             with rasterio.open(path) as source:
-                #data = source.read()
-                forestloss = source.read().astype('float').squeeze()
-                min_val = 2000
-                max_val = 2020
-                forestloss[(forestloss < min_val) | (forestloss > max_val)] = 0
-                forestloss[(forestloss >= min_val) & (forestloss <= max_val)] = 1
-
-                forestloss = gaussian_filter(forestloss, sigma=1)
+                forestloss = source.read().squeeze()
                 forestloss = Tensor(forestloss)
             
 
-            return image_data, label, forestloss
+            return image_data, forestloss, label 
 
 
         return image_data, label

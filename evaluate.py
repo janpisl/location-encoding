@@ -32,10 +32,13 @@ def evaluate(model, loss_fn, dataloader, device, config, epoch):
 
     for data_batch, labels_batch in dataloader:
 
-        data_batch, labels_batch = data_batch.to(device), labels_batch.to(device)
+        if isinstance(data_batch, list):
+            data_batch, forestloss_batch, labels_batch = data_batch[0].to(device), data_batch[1].to(device), labels_batch.to(device)
+            y_hat = model(data_batch, forestloss_batch)
+        else:
+            data_batch, labels_batch = data_batch.to(device), labels_batch.to(device)
+            y_hat = model(data_batch)
 
-        # compute model output
-        y_hat = model(data_batch)
         loss = loss_fn(y_hat, labels_batch)
 
         y_hat = F.softmax(y_hat, dim=1)

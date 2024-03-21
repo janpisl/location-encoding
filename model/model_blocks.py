@@ -7,6 +7,8 @@ import torch.nn.functional as F
 import torch
 import copy
 from typing import List
+import torch
+import torchvision.models as models
 
 
 
@@ -36,10 +38,13 @@ class FeatureExtractor(nn.Module):
         self.backbone.fc = Identity()
 
 
-    def forward(self, x):
+    def forward(self, x, forestloss):
         
         output = {}
-        output['features'] = self.backbone(x)
+        if forestloss:
+            output['features'] = self.backbone(x, forestloss) 
+        else:
+            output['features'] = self.backbone(x)
 
         return output
 
@@ -61,7 +66,7 @@ class TemporalFeatureExtractor(FeatureExtractor):
             bidirectional=self.lstm_bidirectional)
 
 
-    def _get_spatial_features_from_ts(self, x, model=None):
+    def _get_spatial_features_from_ts(self, x, model=None, forestloss=None):
         """_summary_
 
         Args:
@@ -162,7 +167,7 @@ class AttentionFeatureExtractor(TemporalFeatureExtractor):
         return spatiotemporal_features, attention_scores
 
 
-    def forward(self, x):
+    def forward(self, x, forestloss):
         """
         x has a shape of BxTxCxWxH
             where
@@ -172,8 +177,8 @@ class AttentionFeatureExtractor(TemporalFeatureExtractor):
                 W, H --- width, height
         
         """
-        
-        backbone_outputs = self._get_spatial_features_from_ts(x)
+
+        backbone_outputs = self._get_spatial_features_from_ts(x, forestloss)
 
         all_hidden_states, cn = self._get_temporal_features(backbone_outputs)
         
@@ -201,6 +206,14 @@ def get_resnet(resnet_type, output_classes=11, **kwargs):
         net = resnet50(weights="DEFAULT" if pretrained else None)
     else:
         raise ValueError("Unknown resnet type")
+    
+        
+    if kwargs['hyperparams']['use_forestloss']:
+        assert resnet_type == 'resnet18', 'Other types of resnet not supported atm'
+        modified_net = ModifiedResNet18(models.resnet.BasicBlock, [2, 2, 2, 2]) #These are the default options for ResNet18
+        modified_net.load_state_dict(net.state_dict())
+        net = modified_net
+
 
     if pretrained: # Create a convlayer and spread the RGB pretrained weights to as many channels as there in the inputs
         net = set_up_pretrained_resnet(net, in_channels=kwargs['hyperparams']['in_channels'])  
@@ -215,8 +228,6 @@ def get_resnet(resnet_type, output_classes=11, **kwargs):
     
 
     net.fc = nn.Linear(net.fc.in_features, out_features=output_classes, bias = True) # The number of output classes doesn't matter, it will get re-initialized
-        
-
 
     return net
 
@@ -250,3 +261,35 @@ class Identity(nn.Module):
         
     def forward(self, x):
         return x
+    
+
+class ModifiedResNet18(models.ResNet):
+    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
+                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
+                 norm_layer=None):
+        super(ModifiedResNet18, self).__init__(block, layers, num_classes, zero_init_residual,
+                                               groups, width_per_group, replace_stride_with_dilation, norm_layer)
+        # Initialize any additional layers or parameters here if needed
+
+    def forward(self, x, forestloss=None):
+
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        #print(x.shape) torch.Size([64, 64, 25, 25])
+
+        x = self.layer1(x)
+        x = torch.mul(x, forestloss) #Multiply feature map with smoothened forest loss map to make the model focus on relevant parts of image
+        #print(x.shape) torch.Size([64, 64, 25, 25])
+
+        x = self.layer2(x)
+        #print(x.shape) torch.Size([64, 64, 13, 13])
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        return x
+

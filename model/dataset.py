@@ -54,6 +54,7 @@ class DriverDataset(Dataset):
         self.use_forestloss = kwargs['hyperparams']['use_forestloss']
         if self.use_forestloss:
             self.forestloss_dir = kwargs['data']['forestloss_folder']
+            self.forestloss_transform = kwargs['forestloss_transform']
 
 
 
@@ -65,6 +66,7 @@ class DriverDataset(Dataset):
         
         sampleid = str(self.img_labels.iloc[idx]['sampleid'])
         paths =  [os.path.join(self.img_dir, sampleid, img_path) for img_path in os.listdir(os.path.join(self.img_dir, sampleid)) ] 
+
 
         if len(paths) == 1 or self.model_type == 'monotemporal': #For monotemporal model, just grab the first image in folder
             with rasterio.open(paths[0]) as source:
@@ -90,13 +92,14 @@ class DriverDataset(Dataset):
         if self.target_transform:
             label = self.target_transform(label)    
         if self.use_forestloss:
-            path = os.path.join(self.forestloss_dir, f'{idx}.tif')
+            sampleid = str(self.img_labels.iloc[idx]['sampleid'])
+            path = os.path.join(self.forestloss_dir, f'{sampleid}.tif')
             with rasterio.open(path) as source:
-                forestloss = source.read().squeeze()
-                forestloss = Tensor(forestloss)
-            
+                forestloss_data = Tensor(source.read())
+                forestloss_data = self.forestloss_transform(forestloss_data)
 
-            return image_data, forestloss, label 
+            
+            return (image_data, forestloss_data), label 
 
 
         return image_data, label

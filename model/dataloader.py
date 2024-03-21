@@ -65,14 +65,28 @@ def fetch_dataloader(types, config):
             transforms.CenterCrop(100),
             SelectBands(band_indices),
             NormalizeGEEImages(),
-            transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
+            #transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
             ])  
 
         eval_transform = transforms.Compose([
             transforms.CenterCrop(100),
             SelectBands(band_indices),
             NormalizeGEEImages(),
-            ])  
+            ])
+        
+        if config['hyperparams']['use_forestloss']:
+            #TODO: use the config parameter to compute the size of the patch
+            #patch_size = config['hyperparams']['forestloss_params']['layer_to_apply']
+            kernel_size = (config['hyperparams']['forestloss_params']['kernel_size'], config['hyperparams']['forestloss_params']['kernel_size'])
+            forestloss_transform = transforms.Compose([
+                transforms.GaussianBlur(
+                    kernel_size, 
+                    sigma=config['hyperparams']['forestloss_params']['sigma'],
+                    ), 
+                transforms.Resize((25, 25), antialias=True),  
+                ])       
+        else:
+            forestloss_transform = None
     
 
     dataloaders = {}
@@ -111,6 +125,7 @@ def fetch_dataloader(types, config):
                             config['data']['image_folder'],
                             transform=train_transform,
                             model_type=config['hyperparams']['model_type'],
+                            forestloss_transform=forestloss_transform,
                             **config
                             ), 
                         batch_size=config['hyperparams']['batch_size'], 
@@ -140,6 +155,7 @@ def fetch_dataloader(types, config):
                             config['data']['image_folder'],
                             transform=eval_transform,
                             model_type=config['hyperparams']['model_type'],
+                            forestloss_transform=forestloss_transform,
                             **config
                             ), 
                         batch_size=config['hyperparams']['batch_size'], 

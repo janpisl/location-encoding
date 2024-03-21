@@ -30,9 +30,9 @@ class DriverClassifier(nn.Module):
 
         self.return_att_scores = return_att_scores
      
-    def forward(self, x):
+    def forward(self, x, forestloss_patch=None):
         
-        feat_extractor_outputs = self.feat_extractor(x)
+        feat_extractor_outputs = self.feat_extractor(x, forestloss_patch)
         output = self.classifier(feat_extractor_outputs['features'])
 
         if self.return_att_scores:

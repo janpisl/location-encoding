@@ -2,9 +2,9 @@
     
 
     "data": {
-        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v3/labels.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v3/four_images",
-        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles_blurred",
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v3/labels_forestloss_filtered.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v3/one_image",
+        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles",
         "output_folder":  "models_trained/"
     },
 
@@ -12,16 +12,40 @@
         "seed": [424],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1000],
+        "epochs": [100],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "model_type": ["monotemporal"],
-        "backbone": ["resnet34"],
+        "backbone": ["resnet18"],
         "pretrained_backbone" : ["True"],
         "in_channels": [4],
         "early_stopping_patience": [50],
 
-        "use_forestloss" : ["True", "False"]
+        
+        "use_forestloss" : ["True"],
+        "forestloss_params": [
+            {
+                "kernel_size" : 7,
+                "sigma" : 1.5,
+                "layer_to_apply" : 1
+            },
+            {
+                "kernel_size" : 7,
+                "sigma" : 6,
+                "layer_to_apply" : 1
+            },            
+            {
+                "kernel_size" : 15,
+                "sigma" : 1.5,
+                "layer_to_apply" : 1
+            },
+            {
+                "kernel_size" : 15,
+                "sigma" : 6,
+                "layer_to_apply" : 1
+            }
+
+        ]
     },
 
 
@@ -29,6 +53,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "tmf"
+        "group": "tmf March 2024 v3"
     }
 }

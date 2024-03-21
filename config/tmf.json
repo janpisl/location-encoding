@@ -19,31 +19,23 @@
         "backbone": ["resnet18"],
         "pretrained_backbone" : ["True"],
         "in_channels": [4],
-        "early_stopping_patience": [50],
+        "early_stopping_patience": [25],
 
         
         "use_forestloss" : ["True"],
         "forestloss_params": [
+
             {
-                "kernel_size" : 7,
-                "sigma" : 1.5,
-                "layer_to_apply" : 1
-            },
-            {
-                "kernel_size" : 7,
-                "sigma" : 6,
+                "kernel_size" : 13,
+                "sigma" : 3,
                 "layer_to_apply" : 1
             },            
             {
                 "kernel_size" : 15,
-                "sigma" : 1.5,
-                "layer_to_apply" : 1
-            },
-            {
-                "kernel_size" : 15,
-                "sigma" : 6,
+                "sigma" : 3,
                 "layer_to_apply" : 1
             }
+
 
         ]
     },

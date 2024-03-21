@@ -272,7 +272,7 @@ class ModifiedResNet18(models.ResNet):
         # Initialize any additional layers or parameters here if needed
 
     def forward(self, x, forestloss=None):
-
+        
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)

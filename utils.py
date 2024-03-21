@@ -113,7 +113,7 @@ def get_histogram_matrix(array, bins=[x/20 for x in range(0,21)], ylim=(0,30000)
 
 
 
-def write_confusion_matrix(y_true, y_pred, labels, filename='data/tmp/confmatrix.png', target_names=None, figsize=(10,10)):
+def write_confusion_matrix(y_true, y_pred, labels, filename='/home/jan/Documents/EPFL/project_2/data/tmp/confmatrix.png', target_names=None, figsize=(10,10)):
     """
     Generate matrix plot of confusion matrix with pretty annotations.
     The plot image is saved to disk.

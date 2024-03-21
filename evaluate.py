@@ -13,15 +13,15 @@ from model.dataset import LABEL_MAPPING
 CLASS_INDICES = [value for key, value in LABEL_MAPPING.items()]
 CLASS_NAMES = [key for key in LABEL_MAPPING.keys()]
 
-def evaluate(model, loss_fn, dataloader, device, config, epoch):
+def evaluate(model, loss_fn, dataloader, device, config, return_preds_and_targets=False):
     """Evaluate the model on `num_steps` batches.
 
     Args:
         model: (torch.nn.Module) the neural network
         loss_fn: a function that takes batch_output and batch_labels and computes the loss for the batch
         dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches data
-        params: (Params) hyperparameters
-        num_steps: (int) number of batches to train on, each of size params.batch_size
+        config: hyperparameters
+        return_preds_and_targets (bool): if True, returns a Tensor containing all predictions and another with all targets
     """
 
     model.eval()
@@ -32,11 +32,12 @@ def evaluate(model, loss_fn, dataloader, device, config, epoch):
 
     for data_batch, labels_batch in dataloader:
 
+
         if isinstance(data_batch, list):
             data_batch, forestloss_batch, labels_batch = data_batch[0].to(device), data_batch[1].to(device), labels_batch.to(device)
             y_hat = model(data_batch, forestloss_batch)
         else:
-            data_batch, labels_batch = data_batch.to(device), labels_batch.to(device)
+            data_batch, labels_batch = data_batch.to(device), labels_batch.to(device)            
             y_hat = model(data_batch)
 
         loss = loss_fn(y_hat, labels_batch)
@@ -49,15 +50,18 @@ def evaluate(model, loss_fn, dataloader, device, config, epoch):
         preds_batches.append(y_hat)
         targets_batches.append(labels_batch)
 
-    metrics = compute_and_log_metrics(targets_batches, preds_batches, 'val', config['wandb']['log_to_wandb'], losses=losses)
+    targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
+    preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
+
+    metrics = compute_and_log_metrics(targets, preds, 'val', config['wandb']['log_to_wandb'], losses=losses)
+
+    if return_preds_and_targets:
+        return metrics, preds, targets
 
     return metrics
 
 
-def compute_and_log_metrics(targets_batches, preds_batches, dataset_name, log_to_wandb, losses=None):
-
-    targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
-    preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
+def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=None):
 
     conf_matrix_file_path = write_confusion_matrix(targets, preds, labels=CLASS_INDICES,target_names=CLASS_NAMES)
     conf_matrix_image = plt.imread(conf_matrix_file_path)

@@ -80,8 +80,11 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
         preds_batches.append(preds)
         targets_batches.append(labels_batch)
 
+    targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
+    preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
+
     #Compute metrics over the training set and log to wandb
-    _ = compute_and_log_metrics(targets_batches, preds_batches, 'train', config['wandb']['log_to_wandb'])
+    _ = compute_and_log_metrics(targets, preds, 'train', config['wandb']['log_to_wandb'])
 
 
 
@@ -121,7 +124,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, device, config, epoch)
+        val_metrics = evaluate(model, loss_fn, val_dataloader, device, config)
 
         val_acc = val_metrics['accuracy']
         is_best = val_acc >= best_val_acc

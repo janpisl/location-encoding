@@ -66,7 +66,7 @@ class TemporalFeatureExtractor(FeatureExtractor):
             bidirectional=self.lstm_bidirectional)
 
 
-    def _get_spatial_features_from_ts(self, x, model=None, forestloss=None):
+    def _get_spatial_features_from_ts(self, x, forestloss, model=None):
         """_summary_
 
         Args:
@@ -92,8 +92,10 @@ class TemporalFeatureExtractor(FeatureExtractor):
         #model_outputs = torch.reshape(y, (x.shape[1],x.shape[0], -1))
 
         for i in range(temporal_steps):
-            model_outputs.append(model(x[:,i]))
-
+            if forestloss is not None:
+                model_outputs.append(model(x[:,i], forestloss))
+            else:
+                model_outputs.append(model(x[:,i]))
         #Stack along new axis
         model_outputs = torch.stack(model_outputs, dim=0)
         
@@ -210,7 +212,7 @@ def get_resnet(resnet_type, output_classes=11, **kwargs):
         
     if kwargs['hyperparams']['use_forestloss']:
         assert resnet_type == 'resnet18', 'Other types of resnet not supported atm'
-        modified_net = ModifiedResNet18(models.resnet.BasicBlock, [2, 2, 2, 2]) #These are the default options for ResNet18
+        modified_net = ModifiedResNet18(models.resnet.BasicBlock, [2, 2, 2, 2], apply_after_layer=kwargs['hyperparams']['forestloss_params']['apply_after_layer'])
         modified_net.load_state_dict(net.state_dict())
         net = modified_net
 
@@ -264,12 +266,15 @@ class Identity(nn.Module):
     
 
 class ModifiedResNet18(models.ResNet):
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
+    #Resnet modified to multiply feature map with smoothened forest loss map to make the model focus on relevant parts of image
+    def __init__(self, block, layers, apply_after_layer, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
         super(ModifiedResNet18, self).__init__(block, layers, num_classes, zero_init_residual,
                                                groups, width_per_group, replace_stride_with_dilation, norm_layer)
         # Initialize any additional layers or parameters here if needed
+
+        self.apply_after_layer = apply_after_layer
 
     def forward(self, x, forestloss=None):
         
@@ -278,16 +283,21 @@ class ModifiedResNet18(models.ResNet):
         x = self.relu(x)
         x = self.maxpool(x)
         #print(x.shape) torch.Size([64, 64, 25, 25])
+        if self.apply_after_layer == 1:
+            x = torch.mul(x, forestloss) 
 
         x = self.layer1(x)
-        x = torch.mul(x, forestloss) #Multiply feature map with smoothened forest loss map to make the model focus on relevant parts of image
         #print(x.shape) torch.Size([64, 64, 25, 25])
+        if self.apply_after_layer == 2:
+            x = torch.mul(x, forestloss) 
 
-        x = self.layer2(x)
+        x = self.layer2(x) 
         #print(x.shape) torch.Size([64, 64, 13, 13])
+        if self.apply_after_layer == 3:
+            x = torch.mul(x, forestloss) 
+        
         x = self.layer3(x)
         x = self.layer4(x)
-
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)

@@ -75,15 +75,20 @@ def fetch_dataloader(types, config):
             ])
         
         if config['hyperparams']['use_forestloss']:
-            #TODO: use the config parameter to compute the size of the patch
-            #patch_size = config['hyperparams']['forestloss_params']['layer_to_apply']
+            layer = config['hyperparams']['forestloss_params']['apply_after_layer']
+            assert layer in [1, 2, 3]
+            if layer == 3: #Given input images of 100x100, after 3rd conv layer they are downsampled to (13,13)
+                patch_size = (13, 13)
+            else: #After the first and second conv layer, the size is constant (25, 25) # TODO: understand how this is possible, should be decreasing
+                patch_size = (25, 25)
+
             kernel_size = (config['hyperparams']['forestloss_params']['kernel_size'], config['hyperparams']['forestloss_params']['kernel_size'])
             forestloss_transform = transforms.Compose([
                 transforms.GaussianBlur(
                     kernel_size, 
                     sigma=config['hyperparams']['forestloss_params']['sigma'],
                     ), 
-                transforms.Resize((25, 25), antialias=True),  
+                transforms.Resize(patch_size, antialias=True),  
                 ])       
         else:
             forestloss_transform = None

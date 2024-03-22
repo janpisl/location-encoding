@@ -144,13 +144,18 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
 
 def initialize_wandb(config, model, train_dl, val_dl):
+
     wandb.init(
         project=config['wandb']['project'], 
         group=config['wandb']['group'],
-        reinit=True
+        reinit=True,
+        name=f"""{config['hyperparams']['seed']}
+          layer {config['hyperparams']['forestloss_params']['apply_after_layer']}
+           kernel {config['hyperparams']['forestloss_params']['kernel_size']}
+           sigma {config['hyperparams']['forestloss_params']['sigma']}"""
     )
 
-    log_config = {}
+    log_config = config['hyperparams']
     log_config['# parameters'] = utils.count_parameters(model)
 
     log_config['train dst size'] = len(train_dl.dataset)

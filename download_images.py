@@ -5,14 +5,14 @@ This script downloads images from Earth Engine according to given parameters.
 
 Example of use:
 
-python download_images.py   --save_path data/images/dataset_v3/one_image\
+python download_images.py   --save_path data/images/dataset_v4/test/four_images\
     --sensor S2\
-    --sample_points_path data/labels/dataset_v3/labels.csv\
-    --bands S2\
+    --sample_points_path data/tmp/labels_test_v4.csv\
+    --bands S2_RGBNIR\
     --start_date 2022-01-01\
     --end_date 2023-01-01\
     --num_workers 32 \
-    --period_length 12M\
+    --period_length 3M\
     --buffer 600\
     --processing_level TOA \
     --target_shape 120 120

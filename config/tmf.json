@@ -26,14 +26,19 @@
         "forestloss_params": [
 
             {
-                "kernel_size" : 15,
+                "kernel_size" : 5,
                 "sigma" : 1.5,
-                "apply_after_layer" : 1
+                "apply_after_layer" : 3
             },
             {
-                "kernel_size" : 15,
+                "kernel_size" : 7,
                 "sigma" : 1.5,
-                "apply_after_layer" : 2
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 11,
+                "sigma" : 1.5,
+                "apply_after_layer" : 3
             },
             {
                 "kernel_size" : 15,
@@ -42,22 +47,65 @@
             },
 
             {
-                "kernel_size" : 11,
-                "sigma" : 1.5,
-                "apply_after_layer" : 1
+                "kernel_size" : 5,
+                "sigma" : 3,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 7,
+                "sigma" : 3,
+                "apply_after_layer" : 3
             },
             {
                 "kernel_size" : 11,
-                "sigma" : 1.5,
-                "apply_after_layer" : 2
+                "sigma" : 3,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 15,
+                "sigma" : 3,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 5,
+                "sigma" : 6,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 7,
+                "sigma" : 6,
+                "apply_after_layer" : 3
             },
             {
                 "kernel_size" : 11,
-                "sigma" : 1.5,
+                "sigma" : 6,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 15,
+                "sigma" : 6,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 5,
+                "sigma" : 9,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 7,
+                "sigma" : 9,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 11,
+                "sigma" : 9,
+                "apply_after_layer" : 3
+            },
+            {
+                "kernel_size" : 15,
+                "sigma" : 9,
                 "apply_after_layer" : 3
             }
-            
-
 
         ]
     },
@@ -67,6 +115,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "tmf March 2024 ts layer+kernel_size tuning"
+        "group": "tmf March 2024 ts layer+kernel_size tuning v2"
     }
 }

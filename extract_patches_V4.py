@@ -107,7 +107,7 @@ def load_dataset(dataset_name):
         with rasterio.open(vietnam_coffee_data_path) as src:
             dataset_extent = box(*src.bounds)
         label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [vietnam_coffee_data_path]})
-        
+         
         class_mapping = {
             1 : 'coffee'
         }
@@ -154,6 +154,47 @@ def load_dataset(dataset_name):
             50 : 'urban',
         }
 
+
+    elif dataset == 'cocoa_ecuador':
+        dataset_prefix = 110000000
+        cocoa_ecuador_folder = 'data/input_datasets/cocoa_ecuador'
+        
+        label_gdf = get_tiles_as_gdf(cocoa_ecuador_folder)
+        dataset_extent = box(*label_gdf.total_bounds)
+        class_mapping = {
+            1 : 'cocoa',
+        }
+
+    elif dataset == 'cofee_sdpt_brazil':
+        dataset_prefix = 120000000
+        coffee_sdpt_folder = 'data/input_datasets/sdpt_coffee_brazil'
+        
+        label_gdf = get_tiles_as_gdf(coffee_sdpt_folder)
+        dataset_extent = box(*label_gdf.total_bounds)
+        class_mapping = {
+            1 : 'coffee',
+        }
+
+    elif dataset == 'tyukavina_congo_basin_agri':
+        dataset_prefix = 130000000
+        tyukavina_congo_folder = 'data/input_datasets/tyukavina_congo_basin_agri'
+        
+        label_gdf = get_tiles_as_gdf(tyukavina_congo_folder)
+        dataset_extent = box(*label_gdf.total_bounds)
+        class_mapping = {
+            1 : 'shifting agriculture',
+        }
+
+
+    elif dataset == 'mines':
+        dataset_prefix = 140000000
+        mines_folder = 'data/input_datasets/mines'
+        
+        label_gdf = get_tiles_as_gdf(mines_folder)
+        dataset_extent = box(*label_gdf.total_bounds)
+        class_mapping = {
+            1 : 'mining',
+        }
 
 
     return dataset_prefix, class_mapping, label_gdf, dataset_extent
@@ -351,7 +392,7 @@ if __name__ == '__main__':
 
     patch_rows, patch_cols = 34, 34 #as close as possible to 1km square
     min_px_forest_loss = 15 #Pixel size is 30x30m;
-    min_ratio_for_driver = 0.5 # E.g., for patch with 100 pixels of forest loss, at least min_ratio_for_driver*100 must 
+    min_ratio_for_driver = 0.5 # E.g., for patch with 100 pixels of forest loss, at least min_ratio_for_driver*100 must be of the main driver class
 
 
 
@@ -369,7 +410,11 @@ if __name__ == '__main__':
         #'coffee_maskell',
         #'mapbiomas_indonesia',
         #'palm_oil', 
-        'worldcover'
+        #'worldcover',
+        #'cofee_sdpt_brazil', 
+        #'cocoa_ecuador',
+        #'tyukavina_congo_basin_agri',
+        'mines',
         ]
 
 

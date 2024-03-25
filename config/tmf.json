@@ -4,16 +4,16 @@
     "data": {
         "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v3/labels_forestloss_filtered.csv",
         "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v3/four_images",
-        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles",
+        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v3",
         "output_folder":  "models_trained/"
     },
 
     "hyperparams" :{
         "seed": [422, 423, 424],
         "batch_size": [64],
-        "learning_rate": [0.0005],
+        "learning_rate": [0.0005, 0.001, 0.002],
         "epochs": [100],
-        "weight_decay": [0.002],
+        "weight_decay": [0.005, 0.002, 0.001],
         "randomize_labels": ["False"],
         "model_type": ["multitemporal"],
         "backbone": ["resnet18"],
@@ -26,86 +26,11 @@
         "forestloss_params": [
 
             {
-                "kernel_size" : 5,
-                "sigma" : 1.5,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 7,
-                "sigma" : 1.5,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 11,
-                "sigma" : 1.5,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 15,
-                "sigma" : 1.5,
-                "apply_after_layer" : 3
-            },
-
-            {
-                "kernel_size" : 5,
-                "sigma" : 3,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 7,
-                "sigma" : 3,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 11,
-                "sigma" : 3,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 15,
-                "sigma" : 3,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 5,
-                "sigma" : 6,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 7,
-                "sigma" : 6,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 11,
-                "sigma" : 6,
-                "apply_after_layer" : 3
-            },
-            {
                 "kernel_size" : 15,
                 "sigma" : 6,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 5,
-                "sigma" : 9,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 7,
-                "sigma" : 9,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 11,
-                "sigma" : 9,
-                "apply_after_layer" : 3
-            },
-            {
-                "kernel_size" : 15,
-                "sigma" : 9,
                 "apply_after_layer" : 3
             }
+  
 
         ]
     },
@@ -115,6 +40,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "tmf March 2024 ts layer+kernel_size tuning v2"
+        "group": "lr, weight decay"
     }
 }

@@ -67,7 +67,7 @@ def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=N
     conf_matrix_image = plt.imread(conf_matrix_file_path)
 
     metrics = classification_report(targets, preds, output_dict=True,labels=CLASS_INDICES,target_names=CLASS_NAMES,zero_division=0)
-       
+
     log_dict = {}
     log_dict[f'{dataset_name} accuracy'] = metrics['accuracy']
     log_dict[f'{dataset_name} macro f1-score'] = metrics['macro avg']['f1-score']
@@ -81,5 +81,5 @@ def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=N
     
     if log_to_wandb:
         wandb.log(log_dict)
-
+    
     return metrics

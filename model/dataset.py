@@ -23,7 +23,7 @@ LABEL_MAPPING = {
     'rubber': 8,
     'forest regrowth': 9,
     'shifting agriculture': 10,
-    'other': 11 #new class, might break things with dataset_v3
+   # 'other': 11 #new class, breaks with dataset_v3
 }
 
 

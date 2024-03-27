@@ -196,7 +196,7 @@ class AttentionFeatureExtractor(TemporalFeatureExtractor):
 
 
 
-def get_resnet(resnet_type, output_classes=11, **kwargs):
+def get_resnet(resnet_type, output_size, **kwargs):
 
     pretrained = kwargs['hyperparams']['pretrained_backbone']
 
@@ -229,7 +229,7 @@ def get_resnet(resnet_type, output_classes=11, **kwargs):
         nn.init.kaiming_normal_(net.conv1.weight, mode="fan_out", nonlinearity="relu")
     
 
-    net.fc = nn.Linear(net.fc.in_features, out_features=output_classes, bias = True) # The number of output classes doesn't matter, it will get re-initialized
+    net.fc = nn.Linear(net.fc.in_features, out_features=output_size, bias = True) # The number of output classes doesn't matter, it will get re-initialized
 
     return net
 

@@ -11,7 +11,7 @@ import math
 from model.positional_embeddings import *
 
 class LocationDriverClassifier(nn.Module):
-    def __init__(self, output_classes, positional_embedding, **kwargs):
+    def __init__(self, positional_embedding, output_classes=None, feat_extractor_only=False, **kwargs):
         super(LocationDriverClassifier, self).__init__()
 
         if positional_embedding == 'direct':
@@ -23,12 +23,15 @@ class LocationDriverClassifier(nn.Module):
         else:
             raise ValueError(f"Unrecognized PE() method: {positional_embedding}")
         
+        if not output_classes:
+            assert feat_extractor_only
+    
         self.output_classes = output_classes
         
         #TODO: do this properly
         dim_hidden = 256
 
-        self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=dim_hidden)
+        self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=dim_hidden, feat_extractor_only=feat_extractor_only)
 
     def forward(self, x):
 
@@ -59,10 +62,13 @@ class ResLayer(nn.Module):
         return out
 
 class FCNet(nn.Module):
-    def __init__(self, num_inputs, num_classes, dim_hidden):
+    def __init__(self, num_inputs, num_classes, dim_hidden, feat_extractor_only):
         super(FCNet, self).__init__()
         self.inc_bias = False
-        self.classifier = nn.Linear(dim_hidden, num_classes, bias=self.inc_bias)
+
+        self.feat_extractor_only = feat_extractor_only
+        if not self.feat_extractor_only:
+            self.classifier = nn.Linear(dim_hidden, num_classes, bias=self.inc_bias)
 
         self.loc_encoder = nn.Sequential(nn.Linear(num_inputs, dim_hidden),
                                     nn.ReLU(inplace=True),
@@ -72,8 +78,12 @@ class FCNet(nn.Module):
                                     ResLayer(dim_hidden))
 
     def forward(self, x):
+    
         loc_emb = self.loc_encoder(x)
-        class_pred = self.classifier(loc_emb)
-        
-        return class_pred
+        if  self.feat_extractor_only:
+            output = loc_emb
+        else:
+            output = self.classifier(loc_emb)
+
+        return output
     

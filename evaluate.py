@@ -32,13 +32,9 @@ def evaluate(model, loss_fn, dataloader, device, config, return_preds_and_target
 
     for data_batch, labels_batch in dataloader:
 
+        image_batch, loc_batch, forestloss_batch, labels_batch = data_batch[0].to(device), data_batch[1].to(device), data_batch[2].to(device), labels_batch.to(device)
+        y_hat = model(image_batch, loc_batch, forestloss_batch)
 
-        if isinstance(data_batch, list):
-            data_batch, forestloss_batch, labels_batch = data_batch[0].to(device), data_batch[1].to(device), labels_batch.to(device)
-            y_hat = model(data_batch, forestloss_batch)
-        else:
-            data_batch, labels_batch = data_batch.to(device), labels_batch.to(device)            
-            y_hat = model(data_batch)
 
         loss = loss_fn(y_hat, labels_batch)
 

@@ -9,7 +9,7 @@ from torch.nn import Module
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-from model.dataset import DriverDataset, LocationDataset
+from model.dataset import DriverDataset, LocationDataset, MultiModalDataset
 
 
 
@@ -130,17 +130,8 @@ def fetch_dataloader(types, config):
            
             annotation = pd.read_csv(config['data']['annotation_file'])
             folds_to_split_mapping = {int(key):value for key, value in config['hyperparams']['folds_to_split'].items()} 
-            ####temp solution
-            '''folds_to_split_mapping = {
-                0 : 'train',
-                1 : 'train',
-                2 : 'val',
-                3 : 'train',
-                4 : 'test'
-            }'''
-            annotation['split'] = annotation['split'].map(folds_to_split_mapping) 
-            ###
 
+            annotation['split'] = annotation['split'].map(folds_to_split_mapping) 
 
             if split == 'train':
                 if config['hyperparams']['model_type'] == 'loc_encoder':
@@ -155,6 +146,23 @@ def fetch_dataloader(types, config):
                         worker_init_fn=seed_worker,
                         generator=g,
                         )  
+                elif config['hyperparams']['model_type'].startswith("multimodal"):
+                   dl = DataLoader(
+                        MultiModalDataset(
+                            annotation.loc[annotation.split == split].reset_index(drop=True), 
+                            config['data']['image_folder'],
+                            transform=train_transform,
+                            model_type=config['hyperparams']['model_type'],
+                            forestloss_transform=forestloss_transform,
+                            **config
+                            ), 
+                        batch_size=config['hyperparams']['batch_size'], 
+                        shuffle=True,
+                        num_workers=32,
+                        pin_memory=True,
+                        worker_init_fn=seed_worker,
+                        generator=g,
+                        )
                 else:                  
                     dl = DataLoader(
                         DriverDataset(
@@ -185,6 +193,23 @@ def fetch_dataloader(types, config):
                         worker_init_fn=seed_worker,
                         generator=g,
                         )                
+                elif config['hyperparams']['model_type'].startswith("multimodal"):
+                   dl = DataLoader(
+                        MultiModalDataset(
+                            annotation.loc[annotation.split == split].reset_index(drop=True), 
+                            config['data']['image_folder'],
+                            transform=eval_transform,
+                            model_type=config['hyperparams']['model_type'],
+                            forestloss_transform=forestloss_transform,
+                            **config
+                            ), 
+                        batch_size=config['hyperparams']['batch_size'], 
+                        shuffle=False,
+                        num_workers=32,
+                        pin_memory=True,
+                        worker_init_fn=seed_worker,
+                        generator=g,
+                        )
                 else:
                     dl = DataLoader(
                         DriverDataset(

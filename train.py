@@ -57,13 +57,9 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
 
     for i, (train_batch, labels_batch) in enumerate(dataloader):
 
-        if isinstance(train_batch, list):
-            train_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), labels_batch.to(device)
-            y_hat = model(train_batch, forestloss_batch)
-        else:
-            train_batch, labels_batch = train_batch.to(device), labels_batch.to(device)
-            y_hat = model(train_batch)
-        
+        image_batch, loc_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), labels_batch.to(device)
+        y_hat = model(image_batch, loc_batch, forestloss_batch)
+
         loss = loss_fn(y_hat, labels_batch)
 
         optimizer.zero_grad()
@@ -171,7 +167,8 @@ def main(config):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    n_classes = len(np.unique(pd.read_csv(config['data']['annotation_file']).driver ))
+    n_classes = 12
+    #n_classes = len(np.unique(pd.read_csv(config['data']['annotation_file']).driver ))
     
 
     # fetch dataloaders
@@ -190,9 +187,10 @@ def main(config):
         )
     )
     
+    config['n_images'] = num_images
 
     # Define the model and optimizer
-    model = get_model(config, num_images, output_classes=n_classes) 
+    model = get_model(config, output_classes=n_classes) 
     model = model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])

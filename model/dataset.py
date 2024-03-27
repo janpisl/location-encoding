@@ -23,7 +23,7 @@ LABEL_MAPPING = {
     'rubber': 8,
     'forest regrowth': 9,
     'shifting agriculture': 10,
-    'other': 11 #new class, breaks with dataset_v3
+    'other': 11 
 }
 
 
@@ -124,11 +124,6 @@ class LocationDataset(Dataset):
         #self.img_labels['driver'] = self.img_labels[['driver']].sample(frac=1, random_state=1).reset_index(drop=True)
 
 
-        try:
-            self.model_type = kwargs['model_type']
-        except KeyError:
-            self.model_type = None
-
 
     def __len__(self):
         return len(self.img_labels)
@@ -143,3 +138,53 @@ class LocationDataset(Dataset):
         label = LABEL_MAPPING[class_name]  
 
         return x, label
+    
+
+
+
+
+
+class MultiModalDataset(DriverDataset):
+    def __init__(self, 
+                 annotations_file=None, 
+                 img_dir=None, 
+                 transform=None, 
+                 target_transform=None, 
+                 **kwargs):
+        super(MultiModalDataset, self).__init__(annotations_file, img_dir, transform, target_transform, **kwargs)
+
+
+        self.img_labels['geometry'] = gpd.GeoSeries.from_wkt(self.img_labels['geometry'])
+
+
+    def __getitem__(self, idx):
+        image_data = self.load_images(idx)  
+
+        class_name = self.img_labels.driver.iloc[idx]
+        label = LABEL_MAPPING[class_name]
+
+        if self.transform:
+            image_data = self.transform(image_data)
+        if self.target_transform:
+            label = self.target_transform(label)    
+
+        lat, lon = self.img_labels.iloc[idx].geometry.y, self.img_labels.iloc[idx].geometry.x
+        loc = torch.Tensor([lat, lon])
+        
+        inputs  = [image_data, loc]
+
+        if self.use_forestloss:
+            sampleid = str(self.img_labels.iloc[idx]['sampleid'])
+            path = os.path.join(self.forestloss_dir, f'{sampleid}.tif')
+            with rasterio.open(path) as source:
+                forestloss_data = Tensor(source.read())
+                forestloss_data = self.forestloss_transform(forestloss_data)
+
+            inputs.append(forestloss_data)
+
+        return inputs, label
+
+
+
+
+

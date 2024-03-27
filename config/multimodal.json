@@ -1,0 +1,53 @@
+{
+    
+
+    "data": {
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v4/labels_55k.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/four_images",
+        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v4",
+        "output_folder":  "models_trained/"
+    },
+
+    "hyperparams" :{
+        "seed": [423],
+        "batch_size": [64],
+        "learning_rate": [0.0005],
+        "epochs": [1000],
+        "weight_decay": [0.002],
+        "randomize_labels": ["False"],
+        "model_type": ["multimodal_transformer"],
+        "backbone": ["resnet18"],
+        "pretrained_backbone" : ["True"],
+        "in_channels": [4],
+        "early_stopping_patience": [20],
+        "positional_embedding": ["cartesian3d"],
+
+        "use_forestloss" : ["True"],
+        "forestloss_params": [
+            {
+                "kernel_size" : 15,
+                "sigma" : 6,
+                "apply_after_layer" : 3
+            }
+        ],
+
+        "folds_to_split" : [
+            {
+                "0" : "train",
+                "1" : "train",
+                "2" : "val",
+                "3" : "train",
+                "4" : "test"
+            }
+
+        ]
+    },
+
+
+    "wandb": {
+        "log_to_wandb" : "True",
+        "project" : "project_2",
+        "entity" : "janpisl",
+        "group": "multimodal"
+    }
+}

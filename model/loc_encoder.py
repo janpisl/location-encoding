@@ -28,15 +28,13 @@ class LocationDriverClassifier(nn.Module):
         #TODO: do this properly
         dim_hidden = 256
 
-        self.nn =  FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=dim_hidden)
+        self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=dim_hidden)
 
     def forward(self, x):
 
         embedded_x = self.pe(x)
 
         return self.nn(embedded_x)
-
-
 
 
 

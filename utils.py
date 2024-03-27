@@ -155,6 +155,7 @@ def write_confusion_matrix(y_true, y_pred, labels, filename='/home/jan/Documents
     fig, ax = plt.subplots(figsize=figsize)
     sns.heatmap(cm, annot=annot, fmt='', ax=ax)
     plt.savefig(filename)
+    plt.tight_layout()
     plt.close()
 
     return filename

@@ -41,6 +41,24 @@ class SelectBands(Module):
 
 
 
+
+class ConditionalGaussianBlur:
+    """Applies GaussianBlur if multiple values are present; if only one value, returns input as is
+        The condition is added because GaussianBlur to a constant tensor produces an unwanted result
+    """
+    def __init__(self, transform):
+        self.transform = transform
+
+    def __call__(self, x):
+        # Check if all elements in x are 1 
+        if torch.all(x == 1):
+            # Return original tensor without applying the transform
+            return x
+        else:
+            # Apply the transform
+            return self.transform(x)
+
+
 def fetch_dataloader(types, config):
     """
     Fetches the DataLoader object for each type in types from data_dir.
@@ -84,9 +102,11 @@ def fetch_dataloader(types, config):
 
             kernel_size = (config['hyperparams']['forestloss_params']['kernel_size'], config['hyperparams']['forestloss_params']['kernel_size'])
             forestloss_transform = transforms.Compose([
-                transforms.GaussianBlur(
-                    kernel_size, 
-                    sigma=config['hyperparams']['forestloss_params']['sigma'],
+                ConditionalGaussianBlur(
+                    transforms.GaussianBlur(
+                        kernel_size, 
+                        sigma=config['hyperparams']['forestloss_params']['sigma'],
+                        )
                     ), 
                 transforms.Resize(patch_size, antialias=True),  
                 ])       
@@ -109,6 +129,18 @@ def fetch_dataloader(types, config):
         if split in types:
            
             annotation = pd.read_csv(config['data']['annotation_file'])
+            folds_to_split_mapping = {int(key):value for key, value in config['hyperparams']['folds_to_split'].items()} 
+            ####temp solution
+            '''folds_to_split_mapping = {
+                0 : 'train',
+                1 : 'train',
+                2 : 'val',
+                3 : 'train',
+                4 : 'test'
+            }'''
+            annotation['split'] = annotation['split'].map(folds_to_split_mapping) 
+            ###
+
 
             if split == 'train':
                 if config['hyperparams']['model_type'] == 'loc_encoder':

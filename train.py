@@ -149,10 +149,12 @@ def initialize_wandb(config, model, train_dl, val_dl):
         project=config['wandb']['project'], 
         group=config['wandb']['group'],
         reinit=True,
-        name=f"""{config['hyperparams']['seed']}
-          layer {config['hyperparams']['forestloss_params']['apply_after_layer']}
-           kernel {config['hyperparams']['forestloss_params']['kernel_size']}
-           sigma {config['hyperparams']['forestloss_params']['sigma']}"""
+        name= f"""train {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'train' ]}
+            val {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'val' ]}"""
+        #name=f"""dst v4 {config['hyperparams']['seed']}
+        #  layer {config['hyperparams']['forestloss_params']['apply_after_layer']}
+        #   kernel {config['hyperparams']['forestloss_params']['kernel_size']}
+        #   sigma {config['hyperparams']['forestloss_params']['sigma']}"""
     )
 
     log_config = config['hyperparams']
@@ -189,7 +191,6 @@ def main(config):
     )
     
 
-
     # Define the model and optimizer
     model = get_model(config, num_images, output_classes=n_classes) 
     model = model.to(device)
@@ -198,14 +199,11 @@ def main(config):
     loss_fn = nn.CrossEntropyLoss(reduction='mean')
 
 
-
     if config['wandb']['log_to_wandb']:
         run_id = initialize_wandb(config, model, train_dl, val_dl)
     else:
         run_id = 'wandb_id'
 
-    #Temp:
-    #run_id = 'wandb_id'
     model_dir = os.path.join(config['data']['output_folder'], f'{run_id}')
     Path(model_dir).mkdir(parents=True, exist_ok=True)
 

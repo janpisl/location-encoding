@@ -35,8 +35,8 @@
             {
                 "0" : "train",
                 "1" : "train",
-                "2" : "val",
-                "3" : "train",
+                "2" : "train",
+                "3" : "val",
                 "4" : "test"
             }
 

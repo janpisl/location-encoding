@@ -38,7 +38,6 @@ class MultiModalClassifier(nn.Module):
 
 class MultiModalTransformerClassifier(nn.Module):
 
-
     def __init__(self, output_classes, **kwargs):
         super(MultiModalTransformerClassifier, self).__init__()
 
@@ -49,7 +48,7 @@ class MultiModalTransformerClassifier(nn.Module):
         self.loc_encoder = LocationDriverClassifier(positional_embedding=kwargs['hyperparams']['positional_embedding'], feat_extractor_only=True, **kwargs)
 
         encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=8)
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=4)
         self.cls_token = nn.Parameter(torch.randn(embedding_dim))
         self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
 
@@ -72,7 +71,7 @@ class MultiModalTransformerClassifier(nn.Module):
 
         features = torch.stack([cls_tokens, *model_outputs, loc_features])
 
-        outputs = self.transformer(features)
-        predictions = self.classifier(outputs[0]) # Use the cls token to get class logits
+        cls_token_output = self.transformer(features)[0]
+        predictions = self.classifier(cls_token_output) 
 
         return predictions

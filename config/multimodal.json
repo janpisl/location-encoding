@@ -9,7 +9,7 @@
     },
 
     "hyperparams" :{
-        "seed": [423],
+        "seed": [424,425],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1000],
@@ -31,6 +31,15 @@
             }
         ],
 
+        "multimodal_params": [
+            {
+                "embedding_dim" : 128,
+                "transformer_layers": 3,
+                "attention_heads":8
+            }
+        ],
+
+
         "folds_to_split" : [
             {
                 "0" : "train",
@@ -48,6 +57,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "multimodal"
+        "group": "multimodal; transformer architecture tuning"
     }
 }

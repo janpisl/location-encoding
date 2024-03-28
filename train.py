@@ -145,8 +145,10 @@ def initialize_wandb(config, model, train_dl, val_dl):
         project=config['wandb']['project'], 
         group=config['wandb']['group'],
         reinit=True,
-        name= f"""train {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'train' ]}
-            val {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'val' ]}"""
+        name= f"""embed dim {config['hyperparams']['multimodal_params']['embedding_dim']}
+           layers {config['hyperparams']['multimodal_params']['transformer_layers']} seed {config['hyperparams']['seed']}"""
+        #f"""train {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'train' ]}
+        #    val {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'val' ]}"""
         #name=f"""dst v4 {config['hyperparams']['seed']}
         #  layer {config['hyperparams']['forestloss_params']['apply_after_layer']}
         #   kernel {config['hyperparams']['forestloss_params']['kernel_size']}

@@ -41,14 +41,15 @@ class MultiModalTransformerClassifier(nn.Module):
     def __init__(self, output_classes, **kwargs):
         super(MultiModalTransformerClassifier, self).__init__()
 
-        embedding_dim = 256
+        
+        embedding_dim = kwargs['hyperparams']['multimodal_params']['embedding_dim']
         
         self.image_encoder = get_resnet(kwargs['hyperparams']['backbone'], output_size=embedding_dim, **kwargs)
         
-        self.loc_encoder = LocationDriverClassifier(positional_embedding=kwargs['hyperparams']['positional_embedding'], feat_extractor_only=True, **kwargs)
+        self.loc_encoder = LocationDriverClassifier(positional_embedding=kwargs['hyperparams']['positional_embedding'], feat_extractor_only=True, hidden_dim=embedding_dim, **kwargs)
 
-        encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=8)
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=4)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=kwargs['hyperparams']['multimodal_params']['attention_heads'])
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=kwargs['hyperparams']['multimodal_params']['transformer_layers'])
         self.cls_token = nn.Parameter(torch.randn(embedding_dim))
         self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
 

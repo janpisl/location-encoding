@@ -25,13 +25,8 @@ class LocationDriverClassifier(nn.Module):
         
         if not output_classes:
             assert feat_extractor_only
-    
-        self.output_classes = output_classes
-        
-        #TODO: do this properly
-        dim_hidden = 256
-
-        self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=dim_hidden, feat_extractor_only=feat_extractor_only)
+            
+        self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=kwargs['hidden_dim'], feat_extractor_only=feat_extractor_only)
 
     def forward(self, x):
 

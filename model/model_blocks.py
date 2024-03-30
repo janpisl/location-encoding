@@ -12,61 +12,71 @@ import torchvision.models as models
 
 
 
-class Classifier(nn.Module):
-    def __init__(self, input_size, output_size, n_layers=2):
-        super(Classifier, self).__init__()
-        #For each layer except the last one, add linear layer and ReLU
-        layers = [
-            nn.Sequential(*[nn.Linear(input_size, out_features=input_size, bias = True), nn.ReLU(True)])
-            for i in range(n_layers - 1)]
-        #layers = [item for sublist in layers for item in sublist] #flatten the nested list
+class TransformerClassifier(nn.Module):
+    def __init__(self, output_classes, **config):
+        super(TransformerClassifier, self).__init__()
 
-        layers.append(nn.Linear(input_size, out_features=output_size, bias = True)) # This will always be there                                                  
-        self.mlp = nn.Sequential(*layers)
+        embedding_dim = config['hyperparams']['embedding_dim']
 
-    def forward(self, x):
-        return self.mlp(x)
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=embedding_dim, 
+            nhead=config['hyperparams']['classifier']['attention_heads'])
+        self.transformer_enc = nn.TransformerEncoder(
+            encoder_layer, 
+            num_layers=config['hyperparams']['classifier']['transformer_layers'])
 
+        self.cls_token = nn.Parameter(torch.randn(embedding_dim))
 
-class FeatureExtractor(nn.Module):
-    def __init__(self, **kwargs):
-        super(FeatureExtractor, self).__init__()
+        self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
 
-        self.backbone = get_resnet(resnet_type=kwargs['hyperparams']['backbone'], **kwargs)
-        self.backbone_output_size = self.backbone.fc.in_features
-        #Remove the last fully connected layer so that the output of resnet is a vector of size 512 (or 2048 for resnet50)
-        self.backbone.fc = Identity()
-
-
-    def forward(self, x, forestloss):
         
-        output = {}
-        if forestloss:
-            output['features'] = self.backbone(x, forestloss) 
-        else:
-            output['features'] = self.backbone(x)
+    def forward(self, tokens):
+        """_summary_
 
-        return output
+        Args:
+            tokens (list or Tensor idk yet): set of tokens, each of shape BxD (batch, embedding_dim)
+        """
 
+        batch_size = tokens[0].shape[0] #Need to get this from the current batch to also get the size of the last batch which is smaller than batch_size
+        pdb.set_trace()
+        cls_tokens = self.cls_token.repeat(batch_size,1)
+        features = torch.stack([cls_tokens, *tokens])
 
-class TemporalFeatureExtractor(FeatureExtractor):
-    def __init__(self, **kwargs):
-        super(TemporalFeatureExtractor, self).__init__(**kwargs)
-
-        self.lstm_hidden_size = 512
-
-        lstm_layers = 1
-
-        self.lstm_bidirectional = True
-
-        self.lstm = nn.LSTM(
-            input_size=self.backbone_output_size, 
-            hidden_size=self.lstm_hidden_size, 
-            num_layers=lstm_layers, 
-            bidirectional=self.lstm_bidirectional)
+        cls_token_output = self.transformer_enc(features)[0]
+        predictions = self.classifier(cls_token_output) 
+        
+        return predictions
 
 
-    def _get_spatial_features_from_ts(self, x, forestloss, model=None):
+class FullyConnectedClassifier(nn.Module):
+    def __init__(self, output_classes, input_dimension, **config):
+        super(FullyConnectedClassifier, self).__init__()
+
+        self.classifier = nn.Linear(input_dimension, out_features=output_classes, bias = True)
+
+        
+    def forward(self, tokens):
+        """_summary_
+
+        Args:
+            tokens (list): set of tokens, each of shape BxD (batch, embedding_dim)
+        """
+
+        features = torch.cat(tokens, dim=1)
+
+        return self.classifier(features)
+
+
+
+
+
+class TemporalWrapper(nn.Module):
+    def __init__(self, model):
+        super(TemporalWrapper, self).__init__()
+
+        self.model = model
+        
+    def forward(self, x, forestloss):
         """_summary_
 
         Args:
@@ -76,129 +86,65 @@ class TemporalFeatureExtractor(FeatureExtractor):
         Returns:
             _type_: _description_
         """
-        if not model:
-            model = self.backbone
 
         if len(x.shape) == 4: #If single-temporal (ie. no T dimenison), add the T axis
             x = x.unsqueeze(1)
+        
         model_outputs  = []
         #Length of temporal series
         temporal_steps = x.shape[1] 
-        
-        #TODO: I can reshape x to move the temporal dimension to batch to remove the for loop and speed it up
-        #I tried the below but that doesn't work
-        #flattened_x = torch.reshape(x, (x.shape[0]*x.shape[1], x.shape[2], x.shape[3], x.shape[4]))
-        #y = model(flattened_x)
-        #model_outputs = torch.reshape(y, (x.shape[1],x.shape[0], -1))
 
         for i in range(temporal_steps):
             if forestloss is not None:
-                model_outputs.append(model(x[:,i], forestloss))
+                model_outputs.append(self.model(x[:,i], forestloss))
             else:
-                model_outputs.append(model(x[:,i]))
+                model_outputs.append(self.model(x[:,i]))
         #Stack along new axis
         model_outputs = torch.stack(model_outputs, dim=0)
         
         return model_outputs
 
 
-    def forward(self, x):
-        """
-        x has a shape of BxTxCxWxH
-            where
-                B --- batch
-                T --- temporal dimension
-                C --- channels
-                W, H --- width, height
+
+class TemporalWrapperV2(nn.Module):
+    def __init__(self, model):
+        super(TemporalWrapperV2, self).__init__()
+
+        self.model = model
         
-        """
-        spatial_feature_vectors = self._get_spatial_features_from_ts(x)
-
-        all_hidden_states, (hn, cn) = self.lstm(spatial_feature_vectors)
-
-        lstm_output = hn
-
-        if self.lstm_bidirectional:
-            lstm_output = torch.cat((lstm_output[-2], lstm_output[-1]),dim=1) #If n_layers > 1, use the outputs of the LAST layer
-        else:
-            lstm_output =  lstm_output[-1] 
-
-        
-        output = {}
-        output['features'] = lstm_output
-
-        return output
-
-
-class AttentionFeatureExtractor(TemporalFeatureExtractor):
-    def __init__(self, **kwargs):
-        super(AttentionFeatureExtractor, self).__init__(**kwargs)
-
-        #assert kwargs['feature_extractor']['lstm_bidirectional'], "AttentionFeatureExtractor must have bidirectional LSTM"
-        #self.attend_to_images = kwargs['feature_extractor']['attend_to_images']
-
-        try:
-            self.return_att_scores = kwargs['feature_extractor']['return_att_scores']
-        except KeyError:
-            self.return_att_scores = True
-
-
-    def _get_temporal_features(self, feature_maps, lstm=None):
-        
-        if lstm:
-            all_hidden_states, (hn, cn) = lstm(feature_maps)
-        else:
-            all_hidden_states, (hn, cn) = self.lstm(feature_maps)
-
-        cn = torch.cat((cn[-2], cn[-1]),dim=1) #If n_layers > 1, use the outputs of the LAST layer
-
-        return all_hidden_states, cn
-
-
-    def _apply_attention(self, hidden_states, query, feature_maps=None):
-
-        #query is Bx1024, all_hidden_states is TxBx1024
-        attention_scores = hidden_states.transpose(0,1).matmul(query.unsqueeze(2)).squeeze(-1)
-
-        #attention_scores.shape should be BxT
-        attention_scores = F.softmax(attention_scores, dim=1)
-
-        assert feature_maps is not None
-        spatiotemporal_features = feature_maps.transpose(1,2).transpose(0,2).matmul(attention_scores.unsqueeze(2)).squeeze(2)
-
-        return spatiotemporal_features, attention_scores
-
-
     def forward(self, x, forestloss):
+        """_summary_
+
+        Args:
+            x (input time series): shape BxTxCxWxH
+            model (optional)
+
+        Returns:
+            Tensor: output features of shape BxTxD (D=output dimension of model passed at init)
         """
-        x has a shape of BxTxCxWxH
-            where
-                B --- batch
-                T --- temporal dimension
-                C --- channels
-                W, H --- width, height
+
+        if len(x.shape) == 4: #If single-temporal (ie. no T dimenison), add the T axis
+            x = x.unsqueeze(1)
+
+        B, T, C, W, H = x.size()
+        # Reshape x to: (B*T)xCxWxH to apply the model on each frame
+        x_reshaped = x.view(B * T, C, W, H)
+        # Apply the model
+        if forestloss is not None:
+            out = self.model(x_reshaped, forestloss)
+        else:
+            out = self.model(x_reshaped)
         
-        """
-
-        backbone_outputs = self._get_spatial_features_from_ts(x, forestloss)
-
-        all_hidden_states, cn = self._get_temporal_features(backbone_outputs)
+        # Assuming the model's output is a feature vector of shape (B*T)xFeatureDim
+        # Reshape output back to: BxTxFeatureDim
+        out_reshaped = out.view(B, T, -1)
         
-        attended_features, attention_scores =  self._apply_attention(all_hidden_states, cn, backbone_outputs)
-
-        output = {}
-        output['features'] = attended_features
-        if self.return_att_scores:
-            output.update({'att_scores': attention_scores})
-
-        return output
+        return out_reshaped
 
 
+def get_resnet(resnet_type, output_size=None, **kwargs):
 
-
-def get_resnet(resnet_type, output_size, **kwargs):
-
-    pretrained = kwargs['hyperparams']['pretrained_backbone']
+    pretrained = kwargs['hyperparams']['image_encoder']['pretrained_backbone']
 
     if resnet_type == 'resnet18':
         net = resnet18(weights="DEFAULT" if pretrained else None)
@@ -228,8 +174,10 @@ def get_resnet(resnet_type, output_size, **kwargs):
                             bias=False)                
         nn.init.kaiming_normal_(net.conv1.weight, mode="fan_out", nonlinearity="relu")
     
-
-    net.fc = nn.Linear(net.fc.in_features, out_features=output_size, bias = True) # The number of output classes doesn't matter, it will get re-initialized
+    #If output_size is specified, create a fully connected layer with that out_features
+    #Otherwise, the default fc layer with 1000 output size remains
+    if output_size:
+        net.fc = nn.Linear(net.fc.in_features, out_features=output_size, bias = True) # The number of output classes doesn't matter, it will get re-initialized
 
     return net
 
@@ -256,6 +204,9 @@ def set_up_pretrained_resnet(net, in_channels):
 
 
 
+
+
+
 #Just a dummy model that does nothing
 class Identity(nn.Module):
     def __init__(self):
@@ -263,7 +214,7 @@ class Identity(nn.Module):
         
     def forward(self, x):
         return x
-    
+
 
 class ModifiedResNet18(models.ResNet):
     #Resnet modified to multiply feature map with smoothened forest loss map to make the model focus on relevant parts of image
@@ -302,4 +253,7 @@ class ModifiedResNet18(models.ResNet):
         x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
+    
+
+
 

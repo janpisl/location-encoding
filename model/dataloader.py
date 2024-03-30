@@ -9,7 +9,7 @@ from torch.nn import Module
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-from model.dataset import DriverDataset, LocationDataset, MultiModalDataset
+from model.dataset import DriverDataset
 
 
 
@@ -59,6 +59,41 @@ class ConditionalGaussianBlur:
             return self.transform(x)
 
 
+def get_forestloss_transform(config):
+    """Make a transform consisting of a GaussianBlur (not applied when values across patch are constant)
+    and resizing depending on where in the ResNet it will be applied
+
+    Args:
+        config (dict): contains configuration of the gaussian blur and which ResNet layer the forestloss patch will be applied *after* 
+
+    Returns:
+        transforms.transform
+    """
+    if config['hyperparams']['use_forestloss']:
+        layer = config['hyperparams']['forestloss_params']['apply_after_layer']
+        assert layer in [1, 2, 3]
+        if layer == 3: #Given input images of 100x100, after 3rd conv layer they are downsampled to (13,13)
+            patch_size = (13, 13)
+        else: #After the first and second conv layer, the size is constant (25, 25) # TODO: understand how this is possible, should be decreasing
+            patch_size = (25, 25)
+
+        kernel_size = (config['hyperparams']['forestloss_params']['kernel_size'], config['hyperparams']['forestloss_params']['kernel_size'])
+        forestloss_transform = transforms.Compose([
+            ConditionalGaussianBlur(
+                transforms.GaussianBlur(
+                    kernel_size, 
+                    sigma=config['hyperparams']['forestloss_params']['sigma'],
+                    )
+                ), 
+            transforms.Resize(patch_size, antialias=True),  
+            ])       
+    else:
+        forestloss_transform = None
+
+    return forestloss_transform
+
+
+
 def fetch_dataloader(types, config):
     """
     Fetches the DataLoader object for each type in types from data_dir.
@@ -71,48 +106,27 @@ def fetch_dataloader(types, config):
         data: (dict) contains the DataLoader object for each type in types
     """
 
-    if config['hyperparams']['model_type'] == 'loc_encoder':
-        pass #No need for transforms
-    else:
-        try:
-            band_indices = config['hyperparams']['band_indices']
-        except KeyError:
-            band_indices = None
+    #Possible to configure which bands to use, if none, 
+    try:
+        band_indices = config['hyperparams']['band_indices']
+    except KeyError:
+        band_indices = None
 
-        train_transform = transforms.Compose([
-            transforms.CenterCrop(100),
-            SelectBands(band_indices),
-            NormalizeGEEImages(),
-            #transforms.RandomHorizontalFlip(),  # randomly flip image horizontally
-            ])  
+    train_transform = transforms.Compose([
+        transforms.CenterCrop(100),
+        SelectBands(band_indices),
+        NormalizeGEEImages(),
+        #transforms.RandomHorizontalFlip(),  #turned off to to avoid having to link this randomness with forestloss transforms
+        ])  
 
-        eval_transform = transforms.Compose([
-            transforms.CenterCrop(100),
-            SelectBands(band_indices),
-            NormalizeGEEImages(),
-            ])
-        
-        if config['hyperparams']['use_forestloss']:
-            layer = config['hyperparams']['forestloss_params']['apply_after_layer']
-            assert layer in [1, 2, 3]
-            if layer == 3: #Given input images of 100x100, after 3rd conv layer they are downsampled to (13,13)
-                patch_size = (13, 13)
-            else: #After the first and second conv layer, the size is constant (25, 25) # TODO: understand how this is possible, should be decreasing
-                patch_size = (25, 25)
-
-            kernel_size = (config['hyperparams']['forestloss_params']['kernel_size'], config['hyperparams']['forestloss_params']['kernel_size'])
-            forestloss_transform = transforms.Compose([
-                ConditionalGaussianBlur(
-                    transforms.GaussianBlur(
-                        kernel_size, 
-                        sigma=config['hyperparams']['forestloss_params']['sigma'],
-                        )
-                    ), 
-                transforms.Resize(patch_size, antialias=True),  
-                ])       
-        else:
-            forestloss_transform = None
+    eval_transform = transforms.Compose([
+        transforms.CenterCrop(100),
+        SelectBands(band_indices),
+        NormalizeGEEImages(),
+        ])
     
+    forestloss_transform = get_forestloss_transform(config)
+
 
     dataloaders = {}
 
@@ -134,99 +148,29 @@ def fetch_dataloader(types, config):
             annotation['split'] = annotation['split'].map(folds_to_split_mapping) 
 
             if split == 'train':
-                if config['hyperparams']['model_type'] == 'loc_encoder':
-                    dl = DataLoader(
-                        LocationDataset(
-                            annotation.loc[annotation.split == split].reset_index(drop=True), 
-                            ), 
-                        batch_size=config['hyperparams']['batch_size'], 
-                        shuffle=True,
-                        num_workers=32,
-                        pin_memory=True,
-                        worker_init_fn=seed_worker,
-                        generator=g,
-                        )  
-                elif config['hyperparams']['model_type'].startswith("multimodal"):
-                   dl = DataLoader(
-                        MultiModalDataset(
-                            annotation.loc[annotation.split == split].reset_index(drop=True), 
-                            config['data']['image_folder'],
-                            transform=train_transform,
-                            model_type=config['hyperparams']['model_type'],
-                            forestloss_transform=forestloss_transform,
-                            **config
-                            ), 
-                        batch_size=config['hyperparams']['batch_size'], 
-                        shuffle=True,
-                        num_workers=32,
-                        pin_memory=True,
-                        worker_init_fn=seed_worker,
-                        generator=g,
-                        )
-                else:                  
-                    dl = DataLoader(
-                        DriverDataset(
-                            annotation.loc[annotation.split == split].reset_index(drop=True), 
-                            config['data']['image_folder'],
-                            transform=train_transform,
-                            model_type=config['hyperparams']['model_type'],
-                            forestloss_transform=forestloss_transform,
-                            **config
-                            ), 
-                        batch_size=config['hyperparams']['batch_size'], 
-                        shuffle=True,
-                        num_workers=32,
-                        pin_memory=True,
-                        worker_init_fn=seed_worker,
-                        generator=g,
-                        )
+                _transform = train_transform
+                _shuffle = True
+            elif split == 'val' or split == 'test':
+                _transform = eval_transform
+                _shuffle = False   
             else:
-                if config['hyperparams']['model_type'] == 'loc_encoder':
-                    dl = DataLoader(
-                        LocationDataset(
-                            annotation.loc[annotation.split == split].reset_index(drop=True), 
-                            ), 
-                        batch_size=config['hyperparams']['batch_size'], 
-                        shuffle=False,
-                        num_workers=32,
-                        pin_memory=True,
-                        worker_init_fn=seed_worker,
-                        generator=g,
-                        )                
-                elif config['hyperparams']['model_type'].startswith("multimodal"):
-                   dl = DataLoader(
-                        MultiModalDataset(
-                            annotation.loc[annotation.split == split].reset_index(drop=True), 
-                            config['data']['image_folder'],
-                            transform=eval_transform,
-                            model_type=config['hyperparams']['model_type'],
-                            forestloss_transform=forestloss_transform,
-                            **config
-                            ), 
-                        batch_size=config['hyperparams']['batch_size'], 
-                        shuffle=False,
-                        num_workers=32,
-                        pin_memory=True,
-                        worker_init_fn=seed_worker,
-                        generator=g,
-                        )
-                else:
-                    dl = DataLoader(
-                        DriverDataset(
-                            annotation.loc[annotation.split == split].reset_index(drop=True), 
-                            config['data']['image_folder'],
-                            transform=eval_transform,
-                            model_type=config['hyperparams']['model_type'],
-                            forestloss_transform=forestloss_transform,
-                            **config
-                            ), 
-                        batch_size=config['hyperparams']['batch_size'], 
-                        shuffle=False,
-                        num_workers=32,
-                        pin_memory=True,
-                        worker_init_fn=seed_worker,
-                        generator=g,
-                        )
+                raise ValueError('Unknown split')
+
+            dl = DataLoader(
+                DriverDataset(
+                    annotation.loc[annotation.split == split].reset_index(drop=True), 
+                    config['data']['image_folder'],
+                    transform=_transform,
+                    forestloss_transform=forestloss_transform,
+                    **config
+                    ), 
+                batch_size=config['hyperparams']['batch_size'], 
+                shuffle=_shuffle,
+                num_workers=32,
+                pin_memory=True,
+                worker_init_fn=seed_worker,
+                generator=g,
+                )
 
             dataloaders[split] = dl
 

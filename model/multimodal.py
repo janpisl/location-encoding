@@ -4,75 +4,115 @@ import torch.nn as nn
 import torch
 
 from model.model_blocks import *
-from model.loc_encoder import LocationDriverClassifier
-from model.image_encoder import ImageDriverClassifier
-from model.model_blocks import *
+from model.loc_encoder import LocationEncoder
+from model.legacy_models import CNN_Att_LSTM
 
 
-class MultiModalClassifier(nn.Module):
+def get_image_encoder(config):
+    """Get image encoder that takes in input in shape BxTxCxWxH or BxCxWxH 
+    (does not work for cnn-att-lstm, which requires at least 2 temporal steps),
+    and produces output of shape BxTxD, where D=embedding_dim, which contains
+    features from each image
+    
+    Args:
+        config (dict): _description_
+
+    Returns:
+        object inheriting from nn.Module (or None)
+    """
+
+    #In case no images+no encoder are to be used
+    if config['hyperparams']['image_encoder']['use'] is False:
+        return None
+    
+    encoder_type = config['hyperparams']['image_encoder']['type']
+
+    if encoder_type.lower() == 'cnn-att-lstm':
+        encoder = CNN_Att_LSTM(feat_extractor_only=True, **config)
+    if encoder_type.lower() == 'cnn':
+        encoder = TemporalWrapper(get_resnet(config['hyperparams']['image_encoder']['backbone'], config['hyperparams']['embedding_dim'], **config))
+
+    return encoder
 
 
-    def __init__(self, output_classes, **kwargs):
-        super(MultiModalClassifier, self).__init__()
 
-        
-        self.image_encoder = ImageDriverClassifier(kwargs['n_images'], feat_extractor_only=True, **kwargs)
 
-        self.loc_encoder = LocationDriverClassifier(positional_embedding=kwargs['hyperparams']['positional_embedding'], feat_extractor_only=True, **kwargs)
+def get_classifier(output_classes, config):
+    """Get a module with a forward() that takes in a list of tokens
+    and outputs class logits 
 
-        #self.classifier = Classifier(256+512, output_classes) #this has 2 fc layers
-        self.classifier = nn.Linear(256+512, out_features=output_classes, bias = True)
+    Args:
+        output_classes (int): number of classes
+        config (dict): 
 
-        self.output_classes = output_classes
+    Returns:
+        object inheriting from nn.Module: classifier of input tokens
+    """
 
-    def forward(self, image_data, location, forestloss_patch=None):
+    model_type = config['hyperparams']['classifier']['type']
 
-        image_features = self.image_encoder(image_data, forestloss_patch)
-        loc_features = self.loc_encoder(location)
-        features = torch.cat([image_features, loc_features], dim=1)
+    if model_type == 'fc':
+        input_size = _get_feature_vector_size(config)
+        classifier = FullyConnectedClassifier(output_classes, input_dimension=input_size)
+    elif model_type == 'transformer':
+        classifier = TransformerClassifier(output_classes, **config)
 
-        return self.classifier(features)
+    return classifier
+
+
+def _get_feature_vector_size(config):
+    """Temporary solution; compute the input size of the fully connected layer in a classifier
+
+    Args:
+        config (dict)
+
+    Returns:
+        int: size of concatenated features (which is the input size of the final fc layer)
+    """
+    embed_dim = config['hyperparams']['embedding_dim'] 
+
+    if config['hyperparams']['image_encoder']['type'] == 'cnn-att-lstm':
+        feature_vector_dim = 1*embed_dim
+    elif config['hyperparams']['image_encoder']['type'] == 'cnn':
+        img_folder = config['data']['image_folder'].split('/')[-1]
+        if 'four_images' in img_folder:
+            feature_vector_dim = 4*embed_dim
+        elif 'one_image' in img_folder:
+            feature_vector_dim = 1*embed_dim
+        else:
+            raise ValueError(f'Unexpected value: "{img_folder}"')
+    
+    #Location
+    feature_vector_dim += embed_dim
+
+    return feature_vector_dim
     
 
 
 
-class MultiModalTransformerClassifier(nn.Module):
+class MultiModalDriverClassifier(nn.Module):
+
 
     def __init__(self, output_classes, **kwargs):
-        super(MultiModalTransformerClassifier, self).__init__()
+        super(MultiModalDriverClassifier, self).__init__()
 
-        
-        embedding_dim = kwargs['hyperparams']['multimodal_params']['embedding_dim']
-        
-        self.image_encoder = get_resnet(kwargs['hyperparams']['backbone'], output_size=embedding_dim, **kwargs)
-        
-        self.loc_encoder = LocationDriverClassifier(positional_embedding=kwargs['hyperparams']['positional_embedding'], feat_extractor_only=True, hidden_dim=embedding_dim, **kwargs)
+        self.image_encoder = get_image_encoder(kwargs)
+        self.loc_encoder = LocationEncoder(positional_embedding=kwargs['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **kwargs)
+        self.classifier = get_classifier(output_classes, kwargs)
 
-        encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=kwargs['hyperparams']['multimodal_params']['attention_heads'])
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=kwargs['hyperparams']['multimodal_params']['transformer_layers'])
-        self.cls_token = nn.Parameter(torch.randn(embedding_dim))
-        self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
-
-        self.output_classes = output_classes
 
     def forward(self, image_data, location, forestloss_patch=None):
 
-        model_outputs  = []
-        #Length of temporal series
-        temporal_steps = image_data.shape[1]
-
-        for i in range(temporal_steps):
-            if forestloss_patch is not None:
-                model_outputs.append(self.image_encoder(image_data[:,i], forestloss_patch))
-            else:
-                model_outputs.append(self.image_encoder(image_data[:,i]))
+        image_features = self.image_encoder(image_data, forestloss_patch)
 
         loc_features = self.loc_encoder(location)
-        cls_tokens = self.cls_token.repeat(location.shape[0],1)
+        #TODO: need to solve this
+        #(Pdb) image_features.shape
+        #torch.Size([4, 64, 128])
+        #(Pdb) loc_features.shape
+        #torch.Size([64, 128])
+        tokens = [image_features, loc_features]
 
-        features = torch.stack([cls_tokens, *model_outputs, loc_features])
-
-        cls_token_output = self.transformer(features)[0]
-        predictions = self.classifier(cls_token_output) 
+        predictions = self.classifier(tokens)
 
         return predictions

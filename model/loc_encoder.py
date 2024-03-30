@@ -10,9 +10,9 @@ import math
 
 from model.positional_embeddings import *
 
-class LocationDriverClassifier(nn.Module):
+class LocationEncoder(nn.Module):
     def __init__(self, positional_embedding, output_classes=None, feat_extractor_only=False, **kwargs):
-        super(LocationDriverClassifier, self).__init__()
+        super(LocationEncoder, self).__init__()
 
         if positional_embedding == 'direct':
             self.pe = Direct()
@@ -26,7 +26,7 @@ class LocationDriverClassifier(nn.Module):
         if not output_classes:
             assert feat_extractor_only
             
-        self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=kwargs['hidden_dim'], feat_extractor_only=feat_extractor_only)
+        self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=kwargs['hyperparams']['embedding_dim'], feat_extractor_only=feat_extractor_only)
 
     def forward(self, x):
 

@@ -112,7 +112,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     for epoch in range(epochs):
 
         if epochs_since_last_best > early_stopping_patience:
-            print(f'No improvement for {early_stopping_patience} epochs. Early stopping')
+            print(f'No improvement for {early_stopping_patience} epochs. Early stopping at epoch {epoch}')
             break
 
         # compute number of batches in one epoch (one full pass over the training set)
@@ -231,6 +231,9 @@ if __name__ == '__main__':
 
     for variant in permutations_dicts:
         config['hyperparams'] = variant
+        import pprint
+        pprint.pprint(variant)
+        #pdb.set_trace()
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
         main(config)  

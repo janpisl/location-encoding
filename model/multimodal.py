@@ -106,12 +106,13 @@ class MultiModalDriverClassifier(nn.Module):
         image_features = self.image_encoder(image_data, forestloss_patch)
 
         loc_features = self.loc_encoder(location)
-        #TODO: need to solve this
-        #(Pdb) image_features.shape
-        #torch.Size([4, 64, 128])
-        #(Pdb) loc_features.shape
-        #torch.Size([64, 128])
-        tokens = [image_features, loc_features]
+        if len(image_features.shape) ==  len(loc_features.shape):
+            assert len(image_features.shape) == 2, 'unexpected'
+            tokens = torch.stack([image_features, loc_features])
+        elif len(image_features.shape) == 3 and len(loc_features.shape) == 2:
+            tokens = torch.cat([image_features, loc_features.unsqueeze(dim=0)])
+        
+        #Now tokens is a tensor of TxBxD, with T=number of tokens
 
         predictions = self.classifier(tokens)
 

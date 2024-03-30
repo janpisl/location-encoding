@@ -34,13 +34,13 @@ class TransformerClassifier(nn.Module):
         """_summary_
 
         Args:
-            tokens (list or Tensor idk yet): set of tokens, each of shape BxD (batch, embedding_dim)
+            tokens (Tensor): set of tokens, shape TxBxD (n_tokens, batch, embedding_dim)
         """
 
-        batch_size = tokens[0].shape[0] #Need to get this from the current batch to also get the size of the last batch which is smaller than batch_size
-        pdb.set_trace()
-        cls_tokens = self.cls_token.repeat(batch_size,1)
-        features = torch.stack([cls_tokens, *tokens])
+        #Make cls_token tensor in shape (1,B,D)
+        cls_tokens = self.cls_token.repeat(tokens.shape[1],1).unsqueeze(dim=0)
+
+        features = torch.concat([cls_tokens, tokens])
 
         cls_token_output = self.transformer_enc(features)[0]
         predictions = self.classifier(cls_token_output) 
@@ -59,14 +59,11 @@ class FullyConnectedClassifier(nn.Module):
         """_summary_
 
         Args:
-            tokens (list): set of tokens, each of shape BxD (batch, embedding_dim)
+            tokens (Tensor): set of tokens, shape TxBxD (n_tokens, batch, embedding_dim)
         """
+        n_tokens, batch_size, embedding_dim = tokens.shape
 
-        features = torch.cat(tokens, dim=1)
-
-        return self.classifier(features)
-
-
+        return self.classifier(tokens.view(batch_size, embedding_dim*n_tokens))
 
 
 

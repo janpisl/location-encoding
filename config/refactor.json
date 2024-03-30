@@ -47,7 +47,7 @@
         "classifier": [
 
             {
-                "type" : "transformer",
+                "type" : "fc",
                 "transformer_layers": 3,
                 "attention_heads":8
             }

@@ -22,8 +22,7 @@ import utils
 
 import model.dataloader as dataloader
 from evaluate import evaluate, compute_and_log_metrics
-from model.model import get_model
-
+from model.multimodal import MultiModalDriverClassifier
 
 
 
@@ -192,7 +191,7 @@ def main(config):
     config['n_images'] = num_images
 
     # Define the model and optimizer
-    model = get_model(config, output_classes=n_classes) 
+    model = MultiModalDriverClassifier(n_classes,  **config)
     model = model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])

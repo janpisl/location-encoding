@@ -10,8 +10,7 @@ from typing import List
 import torch
 import torchvision.models as models
 
-from model.model_blocks import Identity
-from model.model import get_resnet
+from model.model_blocks import Identity, get_resnet
 
 
 class CNN_Att_LSTM(nn.Module):

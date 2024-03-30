@@ -12,7 +12,7 @@
         "seed": [424],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1000],
+        "epochs": [2],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
@@ -30,26 +30,18 @@
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True"
     
-            },
-            {
-                "use" : "True",
-                "type" : "cnn-att-lstm",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True"
             }
         ],
 
         "loc_encoder": [
-            {"positional_embedding": "cartesian3d"}
+            {
+                "use" : "True",
+                "positional_embedding": "cartesian3d"
+            }
         ],   
         
         "classifier": [
 
-            {
-                "type" : "fc",
-                "transformer_layers": 3,
-                "attention_heads":8
-            },
             {
                 "type" : "transformer",
                 "transformer_layers": 3,
@@ -85,6 +77,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "debugging"
+        "group": "debugging 30/3"
     }
 }

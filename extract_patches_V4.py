@@ -378,7 +378,7 @@ def main(
 
     df.to_csv(os.path.join(output_dir, f'{dataset}.csv'), index=False)
 
-    gdf.to_file(f'data/tmp/dst_v4/{dataset}.gpkg')
+    gdf.to_file(f'data/tmp/dst_v5/{dataset}.gpkg')
 
 
 
@@ -388,32 +388,31 @@ def main(
 if __name__ == '__main__':
 
     print('starting')
-    target_years = list(range(2000, 2020))
+    target_years = list(range(2010, 2020))
 
-    patch_rows, patch_cols = 34, 34 #as close as possible to 1km square
+    patch_rows, patch_cols = 33, 33 #as close as possible to 1km square
     min_px_forest_loss = 15 #Pixel size is 30x30m;
     min_ratio_for_driver = 0.5 # E.g., for patch with 100 pixels of forest loss, at least min_ratio_for_driver*100 must be of the main driver class
 
 
-
     forestloss_dir = '../Vancutsem_yearloss'
     forestloss_tiles = get_tiles_as_gdf(forestloss_dir)
-    output_dir = 'data/labels/dataset_v4'
+    output_dir = 'data/labels/dataset_v5'
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     datasets = [
-        #'rubber',
-        #'cocoa',
-        #'mapbiomas',
-        #'vancutsem_regrowth',
+        'rubber',
+        'cocoa',
+        'mapbiomas',
+        'vancutsem_regrowth',
         #'laos_shifting_agriculture',
-        #'coffee_maskell',
-        #'mapbiomas_indonesia',
-        #'palm_oil', 
-        #'worldcover',
-        #'cofee_sdpt_brazil', 
-        #'cocoa_ecuador',
-        #'tyukavina_congo_basin_agri',
+        'coffee_maskell',
+        'mapbiomas_indonesia',
+        'palm_oil', 
+        'worldcover',
+        'cofee_sdpt_brazil', 
+        'cocoa_ecuador',
+        'tyukavina_congo_basin_agri',
         'mines',
         ]
 

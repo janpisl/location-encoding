@@ -61,9 +61,17 @@ class FullyConnectedClassifier(nn.Module):
         Args:
             tokens (Tensor): set of tokens, shape TxBxD (n_tokens, batch, embedding_dim)
         """
-        n_tokens, batch_size, embedding_dim = tokens.shape
 
-        return self.classifier(tokens.view(batch_size, embedding_dim*n_tokens))
+
+        '''
+        #TODO: Fix this, i don't know how to make it work with view or reshape 
+        n_tokens, batch_size, embedding_dim = tokens.shape
+        tokens.view(batch_size, embedding_dim*n_tokens)
+        '''
+        tokens = list(tokens)
+        tokens = torch.cat(tokens, dim=1)
+
+        return self.classifier(tokens)
 
 
 

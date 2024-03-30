@@ -144,8 +144,8 @@ def initialize_wandb(config, model, train_dl, val_dl):
         project=config['wandb']['project'], 
         group=config['wandb']['group'],
         reinit=True,
-        name= f"""embed dim {config['hyperparams']['multimodal_params']['embedding_dim']}
-           layers {config['hyperparams']['multimodal_params']['transformer_layers']} seed {config['hyperparams']['seed']}"""
+        name= f"""4 img; {config['hyperparams']['image_encoder']['type']}
+           + {config['hyperparams']['classifier']['type']} """
         #f"""train {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'train' ]}
         #    val {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'val' ]}"""
         #name=f"""dst v4 {config['hyperparams']['seed']}

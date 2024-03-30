@@ -12,16 +12,15 @@
         "seed": [424],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1],
+        "epochs": [1000],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
-        "early_stopping_patience": [20],
         "use_forestloss" : ["True"],
+        "early_stopping_patience": [10],
+
 
         "embedding_dim" : [128],
-
-
         "image_encoder": [
 
 
@@ -48,6 +47,11 @@
 
             {
                 "type" : "fc",
+                "transformer_layers": 3,
+                "attention_heads":8
+            },
+            {
+                "type" : "transformer",
                 "transformer_layers": 3,
                 "attention_heads":8
             }
@@ -78,7 +82,7 @@
 
 
     "wandb": {
-        "log_to_wandb" : "False",
+        "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
         "group": "debugging"

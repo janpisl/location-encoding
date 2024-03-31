@@ -40,6 +40,9 @@ class DriverDataset(Dataset):
         self.img_labels = annotations_file if isinstance(annotations_file, pd.DataFrame) else pd.read_csv(annotations_file)
         self.img_labels['geometry'] = gpd.GeoSeries.from_wkt(self.img_labels['geometry'])
 
+        self.tabular_production_data = pd.read_csv(kwargs['data']['tabular_production_data'])
+        self.min_year = 2010
+
         #Randomly swapping filenames 
         #print(" ----  Randomizing labels! ---- ")
         #self.img_labels['driver'] = self.img_labels[['driver']].sample(frac=1, random_state=1).reset_index(drop=True)
@@ -74,6 +77,29 @@ class DriverDataset(Dataset):
                 images.append(data)
             loaded_data = torch.stack(images, dim=0)
         return loaded_data
+    
+
+    def _get_commodity_expansion_rates(self, country, min_year=2010, max_year=2020): #TODO: Max year should be 2022, this is temporary
+
+        #TODO: include also data quality flag - there are 5 possibilities (official, estimated, missing, imputed, value from int'l org)        
+
+        FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green',
+       'Natural rubber in primary forms']
+
+        country_data = self.tabular_production_data.loc[self.tabular_production_data.Area == country]
+
+        values = []
+
+        for _class in FAOSTAT_classes:
+            try:
+                production_at_the_start = country_data.loc[(country_data.Item == _class) & (country_data.Year == int(min_year)), 'Value' ].item()
+                production_at_the_end = country_data.loc[(country_data.Item == _class) & (country_data.Year == int(max_year)), 'Value' ].item()
+                expansion = production_at_the_end - production_at_the_start
+            except ValueError: #Signifies that one (or both) of the values are missing
+                expansion = 0
+            values.append(expansion)
+
+        return torch.Tensor(values)
 
 
     def __getitem__(self, idx):
@@ -102,10 +128,19 @@ class DriverDataset(Dataset):
             path = os.path.join(self.forestloss_dir, f'{sampleid}.tif')
             with rasterio.open(path) as source:
                 forestloss_data = Tensor(source.read())
+                #TODO: find bug - forestloss_data should be just integer numbers but they are not
+                #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
 
-            
-        inputs  = [image_data, loc, forestloss_data]
+
+        ### Adding tabular data
+        country = self.img_labels.iloc[idx].country
+        
+        commodity_production = self._get_commodity_expansion_rates(country, 
+                                                                   #patch_min_year #TODO: this should be passed as input; requires me to download all years
+                                                                   )
+
+        inputs  = [image_data, loc, commodity_production, forestloss_data]
 
         return inputs, label
     

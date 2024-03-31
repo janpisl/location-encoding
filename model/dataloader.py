@@ -40,13 +40,12 @@ class SelectBands(Module):
             return img[:, self.band_indices]
 
 
-
-
-class ConditionalGaussianBlur:
-    """Applies GaussianBlur if multiple values are present; if only one value, returns input as is
+class ConditionalTransform(Module):
+    """Applies transform if multiple values are present in input; if only one value, returns input as is
         The condition is added because GaussianBlur to a constant tensor produces an unwanted result
     """
     def __init__(self, transform):
+        super(ConditionalTransform, self).__init__()
         self.transform = transform
 
     def __call__(self, x):
@@ -57,6 +56,25 @@ class ConditionalGaussianBlur:
         else:
             # Apply the transform
             return self.transform(x)
+
+
+
+class BinarizeTensor(Module):
+    """Returns a Tensor with value 1.0 where original value was between
+    min and max value (inclusive), and 0.0 elsewhere
+    """  
+    def __init__(self, min_val=2010, max_val=2020): 
+        super(BinarizeTensor, self).__init__()
+
+        self.min_val = min_val
+        self.max_val = max_val
+
+    def forward(self, _input):
+
+        _input[(_input < self.min_val) | (_input > self.max_val)] = 0.
+        _input[(_input >= self.min_val) & (_input <= self.max_val)] = 1.
+
+        return _input
 
 
 def get_forestloss_transform(config):
@@ -79,7 +97,8 @@ def get_forestloss_transform(config):
 
         kernel_size = (config['hyperparams']['forestloss_params']['kernel_size'], config['hyperparams']['forestloss_params']['kernel_size'])
         forestloss_transform = transforms.Compose([
-            ConditionalGaussianBlur(
+            BinarizeTensor(),
+            ConditionalTransform(
                 transforms.GaussianBlur(
                     kernel_size, 
                     sigma=config['hyperparams']['forestloss_params']['sigma'],
@@ -166,7 +185,7 @@ def fetch_dataloader(types, config):
                     ), 
                 batch_size=config['hyperparams']['batch_size'], 
                 shuffle=_shuffle,
-                num_workers=32,
+                num_workers=int(config['num_workers']),
                 pin_memory=True,
                 worker_init_fn=seed_worker,
                 generator=g,

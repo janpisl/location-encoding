@@ -62,7 +62,6 @@ class FullyConnectedClassifier(nn.Module):
             tokens (Tensor): set of tokens, shape TxBxD (n_tokens, batch, embedding_dim)
         """
 
-
         '''
         #TODO: Fix this, i don't know how to make it work with view or reshape 
         n_tokens, batch_size, embedding_dim = tokens.shape

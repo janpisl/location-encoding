@@ -56,8 +56,8 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
 
     for i, (train_batch, labels_batch) in enumerate(dataloader):
 
-        image_batch, loc_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), labels_batch.to(device)
-        y_hat = model(image_batch, loc_batch, forestloss_batch)
+        image_batch, loc_batch, expansion_rates_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), train_batch[3].to(device), labels_batch.to(device)
+        y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
 
         loss = loss_fn(y_hat, labels_batch)
 

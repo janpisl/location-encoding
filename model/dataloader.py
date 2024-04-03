@@ -64,7 +64,7 @@ class BinarizeTensor(Module):
     """Returns a Tensor with value 1.0 where original value was between
     min and max value (inclusive), and 0.0 elsewhere
     """  
-    def __init__(self, min_val=2010, max_val=2020): 
+    def __init__(self, min_val=2000, max_val=2020): 
         super(BinarizeTensor, self).__init__()
 
         self.min_val = min_val

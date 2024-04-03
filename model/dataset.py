@@ -41,7 +41,7 @@ class DriverDataset(Dataset):
         self.img_labels['geometry'] = gpd.GeoSeries.from_wkt(self.img_labels['geometry'])
 
         self.tabular_production_data = pd.read_csv(kwargs['data']['tabular_production_data'])
-        self.min_year = 2010
+        #self.min_year = 2000
 
         #Randomly swapping filenames 
         #print(" ----  Randomizing labels! ---- ")

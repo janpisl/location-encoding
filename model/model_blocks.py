@@ -231,7 +231,7 @@ class ModifiedResNet18(models.ResNet):
 
         self.apply_after_layer = apply_after_layer
 
-    def forward(self, x, forestloss=None):
+    def forward(self, x, forestloss):
         
         x = self.conv1(x)
         x = self.bn1(x)

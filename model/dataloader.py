@@ -1,6 +1,7 @@
 import os
 import pdb
 import random
+import json
 
 import torch
 import numpy as np
@@ -162,9 +163,16 @@ def fetch_dataloader(types, config):
         if split in types:
            
             annotation = pd.read_csv(config['data']['annotation_file'])
-            folds_to_split_mapping = {int(key):value for key, value in config['hyperparams']['folds_to_split'].items()} 
-
-            annotation['split'] = annotation['split'].map(folds_to_split_mapping) 
+            
+            split_column = config['hyperparams']['folds_to_split']['column']
+            
+            try:
+                folds_to_split_mapping = {int(key):value for key, value in config['hyperparams']['folds_to_split']['mapping'].items()} 
+            except AttributeError: #in case not a dict is passed but a string
+                with open(config['hyperparams']['folds_to_split']['mapping']) as src:
+                    folds_to_split_mapping = json.loads(src.read())
+                
+            annotation['split'] = annotation[split_column].map(folds_to_split_mapping) 
 
             if split == 'train':
                 _transform = train_transform

@@ -88,8 +88,6 @@ def _get_feature_vector_size(config):
     return feature_vector_dim
     
 
-
-
 class MultiModalDriverClassifier(nn.Module):
 
 
@@ -102,9 +100,7 @@ class MultiModalDriverClassifier(nn.Module):
             self.loc_encoder = LocationEncoder(positional_embedding=kwargs['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **kwargs)
         self.classifier = get_classifier(output_classes, kwargs)
 
-        self.tabular_encoder = nn.Linear(6, out_features=kwargs['hyperparams']['embedding_dim'], bias = True)
-
-
+        #self.tabular_encoder = nn.Linear(6, out_features=kwargs['hyperparams']['embedding_dim'], bias = True)
 
     def forward(self, image_data, location, expansion_rates, forestloss_patch=None):
 
@@ -121,8 +117,8 @@ class MultiModalDriverClassifier(nn.Module):
             tokens = image_features if len(image_features.shape) == 3 else image_features.unsqueeze(dim=0)
         
         #TODO: test both just concatenating the values and concatenating the encoded values through the fc layer "tabular_encoder"
-        commodity_expansion_token = self.tabular_encoder(expansion_rates)
-        tokens =  torch.cat([tokens, commodity_expansion_token.unsqueeze(dim=0)])
+        #commodity_expansion_token = self.tabular_encoder(expansion_rates)
+        #tokens =  torch.cat([tokens, commodity_expansion_token.unsqueeze(dim=0)])
 
         #Now tokens is a tensor of TxBxD, with T=number of tokens
         predictions = self.classifier(tokens)

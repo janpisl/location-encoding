@@ -32,9 +32,8 @@ def evaluate(model, loss_fn, dataloader, device, config, return_preds_and_target
 
     for data_batch, labels_batch in dataloader:
 
-        image_batch, loc_batch, forestloss_batch, labels_batch = data_batch[0].to(device), data_batch[1].to(device), data_batch[2].to(device), labels_batch.to(device)
-        y_hat = model(image_batch, loc_batch, forestloss_batch)
-
+        image_batch, loc_batch, expansion_rates_batch, forestloss_batch, labels_batch = data_batch[0].to(device), data_batch[1].to(device), data_batch[2].to(device), data_batch[3].to(device), labels_batch.to(device)
+        y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
 
         loss = loss_fn(y_hat, labels_batch)
 
@@ -63,9 +62,15 @@ def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=N
     conf_matrix_image = plt.imread(conf_matrix_file_path)
 
     metrics = classification_report(targets, preds, output_dict=True,labels=CLASS_INDICES,target_names=CLASS_NAMES,zero_division=0)
-
     log_dict = {}
-    log_dict[f'{dataset_name} accuracy'] = metrics['accuracy']
+    try:
+        log_dict[f'{dataset_name} accuracy'] = metrics['accuracy']
+    except KeyError: 
+        # In case of some of the classes not represented in the dataset, the 'accuracy' is not reported
+        # and instead they report 'micro avg' 'f1 score', 'precision' and 'recall' which are identical to accuracy (and also identical to each other)
+        metrics['accuracy'] = metrics['micro avg']['f1-score'] 
+        log_dict[f'{dataset_name} accuracy'] = metrics['accuracy']
+    
     log_dict[f'{dataset_name} macro f1-score'] = metrics['macro avg']['f1-score']
     log_dict[f'{dataset_name} conf matrix'] = wandb.Image(conf_matrix_image)
     if losses:

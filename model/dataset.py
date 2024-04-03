@@ -57,6 +57,10 @@ class DriverDataset(Dataset):
             self.forestloss_transform = kwargs['forestloss_transform']
 
 
+        self.FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
+
+
+
     def __len__(self):
         return len(self.img_labels)
 
@@ -79,15 +83,23 @@ class DriverDataset(Dataset):
         return loaded_data
     
 
-    def _get_commodity_expansion_rates(self, country, min_year=2010, max_year=2020): #TODO: Max year should be 2022, this is temporary
+    def _get_static_commodity_expansion_rates(self, country): #TODO: Max year should be 2022, this is temporary
+
+        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
+        
+        return torch.Tensor(country_data[self.FAOSTAT_classes].values)
+
+    def _get_dynamic_commodity_expansion_rates(self, country, min_year=2000, max_year=2020): #TODO: Max year should be 2022, this is temporary
+        assert False, 'for now, the values are precomputed per-country'
+
 
         #TODO: include also data quality flag - there are 5 possibilities (official, estimated, missing, imputed, value from int'l org)        
 
         FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green',
        'Natural rubber in primary forms']
 
-        country_data = self.tabular_production_data.loc[self.tabular_production_data.Area == country]
-
+        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
+        pdb.set_trace()
         values = []
 
         for _class in FAOSTAT_classes:
@@ -136,9 +148,7 @@ class DriverDataset(Dataset):
         ### Adding tabular data
         country = self.img_labels.iloc[idx].country
         
-        commodity_production = self._get_commodity_expansion_rates(country, 
-                                                                   #patch_min_year #TODO: this should be passed as input; requires me to download all years
-                                                                   )
+        commodity_production = self._get_static_commodity_expansion_rates(country)
 
         inputs  = [image_data, loc, commodity_production, forestloss_data]
 

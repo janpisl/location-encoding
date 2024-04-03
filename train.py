@@ -230,9 +230,6 @@ if __name__ == '__main__':
 
     for variant in permutations_dicts:
         config['hyperparams'] = variant
-        import pprint
-        pprint.pprint(variant)
-        #pdb.set_trace()
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
         main(config)  

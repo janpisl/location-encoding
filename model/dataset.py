@@ -3,6 +3,7 @@ import pdb
  
 import torch
 import rasterio
+import numpy as np
 import pandas as pd
 from torch import Tensor
 from torch.utils.data import Dataset
@@ -86,8 +87,17 @@ class DriverDataset(Dataset):
     def _get_static_commodity_expansion_rates(self, country): #TODO: Max year should be 2022, this is temporary
 
         country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
+        values = country_data[self.FAOSTAT_classes].values
+        #np.random.shuffle(values[0]) #as a sanity check, random shuffle of the values 
         
-        return torch.Tensor(country_data[self.FAOSTAT_classes].values)
+        return torch.Tensor(values)
+
+    def _get_country_id(self, country): 
+
+        idx = self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0]
+
+        return torch.Tensor(idx)
+
 
     def _get_dynamic_commodity_expansion_rates(self, country, min_year=2000, max_year=2020): #TODO: Max year should be 2022, this is temporary
         assert False, 'for now, the values are precomputed per-country'
@@ -144,13 +154,14 @@ class DriverDataset(Dataset):
                 #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
 
-
         ### Adding tabular data
         country = self.img_labels.iloc[idx].country
         
         commodity_production = self._get_static_commodity_expansion_rates(country)
-
+        #country_id = torch.Tensor(self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0])
+        
         inputs  = [image_data, loc, commodity_production, forestloss_data]
+        #inputs  = [image_data, loc, commodity_production, forestloss_data]
 
         return inputs, label
     

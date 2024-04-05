@@ -140,18 +140,24 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
 def initialize_wandb(config, model, train_dl, val_dl):
 
+    #name=f"""dst v4 {config['hyperparams']['seed']}
+    #  layer {config['hyperparams']['forestloss_params']['apply_after_layer']}
+    #   kernel {config['hyperparams']['forestloss_params']['kernel_size']}
+    #   sigma {config['hyperparams']['forestloss_params']['sigma']}"""
+
+    #f"""4 img; {config['hyperparams']['image_encoder']['type']}
+        #+ {config['hyperparams']['classifier']['type']} """
+
+    try:
+        name = f"""train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
+            val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
+    except:
+        name = None
     wandb.init(
         project=config['wandb']['project'], 
         group=config['wandb']['group'],
         reinit=True,
-        name= f"""4 img; {config['hyperparams']['image_encoder']['type']}
-           + {config['hyperparams']['classifier']['type']} """
-        #f"""train {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'train' ]}
-        #    val {[int(key) for key,value in config['hyperparams']['folds_to_split'].items() if value == 'val' ]}"""
-        #name=f"""dst v4 {config['hyperparams']['seed']}
-        #  layer {config['hyperparams']['forestloss_params']['apply_after_layer']}
-        #   kernel {config['hyperparams']['forestloss_params']['kernel_size']}
-        #   sigma {config['hyperparams']['forestloss_params']['sigma']}"""
+        name=name
     )
 
     log_config = config['hyperparams']

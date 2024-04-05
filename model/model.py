@@ -125,19 +125,7 @@ class MultiModalDriverClassifier(nn.Module):
         if self.use_location:
             loc_features = self.loc_encoder(location)
             features.append(loc_features)
-            #if len(image_features.shape) ==  len(loc_features.shape):
-            #    assert len(image_features.shape) == 2, 'unexpected'
-            #    tokens = torch.stack([image_features, loc_features])
-            #elif len(image_features.shape) == 3 and len(loc_features.shape) == 2:
-            #    tokens = torch.cat([image_features, loc_features.unsqueeze(dim=0)])
-        #else:
-        #    tokens = image_features if len(image_features.shape) == 3 else image_features.unsqueeze(dim=0)
-        
-        #TODO: test both just concatenating the values and concatenating the encoded values through the fc layer "tabular_encoder"
-        #commodity_expansion_token = self.tabular_encoder(expansion_rates).transpose(0,1)
-        #tokens.append(commodity_expansion_token)
-        
-        #tokens = torch.cat([tokens, commodity_expansion_token])
+
         if self.use_tabular:
             if self.tabular_processing == 'reports_token':
                 tabular_data = self.tabular_encoder(tabular_data)
@@ -147,7 +135,6 @@ class MultiModalDriverClassifier(nn.Module):
             
 
             features.append(tabular_data)
-
 
         predictions = self.classifier(features)
 

@@ -8,6 +8,7 @@ import os
 import itertools
 import pdb
 from pathlib import Path
+import pprint
 
 import pandas as pd
 import wandb
@@ -22,7 +23,7 @@ import utils
 
 import model.dataloader as dataloader
 from evaluate import evaluate, compute_and_log_metrics
-from model.multimodal import MultiModalDriverClassifier
+from model.model import MultiModalDriverClassifier
 
 
 
@@ -44,8 +45,7 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
         optimizer: (torch.optim) optimizer for parameters of model
         loss_fn: a function that takes batch_output and batch_labels and computes the loss for the batch
         dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches training data
-        params: (Params) hyperparameters
-        num_steps: (int) number of batches to train on, each of size params.batch_size
+        config: (dict) configuration duh
     """
 
     # set model to training mode
@@ -153,6 +153,7 @@ def initialize_wandb(config, model, train_dl, val_dl):
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
     except:
         name = None
+    
     wandb.init(
         project=config['wandb']['project'], 
         group=config['wandb']['group'],
@@ -203,7 +204,6 @@ def main(config):
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
     loss_fn = nn.CrossEntropyLoss(reduction='mean')
 
-
     if config['wandb']['log_to_wandb']:
         run_id = initialize_wandb(config, model, train_dl, val_dl)
     else:
@@ -215,7 +215,6 @@ def main(config):
     with open(os.path.join(model_dir, 'config.json'), 'w') as sink:
         json.dump(config, sink)
     
-    # Train the model
     train_and_evaluate(model, train_dl, val_dl, optimizer, loss_fn, config, device, model_dir)
 
 
@@ -225,7 +224,7 @@ if __name__ == '__main__':
     with open(sys.argv[1]) as src:
         config = json.load(src)
 
-    #There is a iterable section in the configuration to enable simple tuning
+    #There is an iterable section in the configuration to enable simple hyperparams tuning
     #The code below generate all combinations and then execute them one by one
     try:
         keys, values = zip(*config['hyperparams'].items())
@@ -234,13 +233,26 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)  
+        main(config)'''
 
- 
+    for variant in permutations_dicts:
+        try:
+            utils.seed_everything(config['hyperparams']['seed'])
+            config['hyperparams'] = variant
+            config = utils.parse_boolean_recursion(config)
+            try:
+                wandb.finish()
+            except:
+                pass
+            main(config)
+        except Exception as e:
+            text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
+            with open("logs_5_4.txt", "a") as sink:
+                sink.write(text)
 
 
 

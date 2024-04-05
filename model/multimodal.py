@@ -82,8 +82,16 @@ def _get_feature_vector_size(config):
         else:
             raise ValueError(f'Unexpected value: "{img_folder}"')
     
-    #Location
-    feature_vector_dim += embed_dim
+    if config['hyperparams']['loc_encoder']['use']: 
+        feature_vector_dim += embed_dim
+
+    if config['hyperparams']['tabular_encoder']['use']: 
+        if config['hyperparams']['tabular_encoder']['type'] == 'country_id':
+            feature_vector_dim += 1
+        elif config['hyperparams']['tabular_encoder']['type'] == 'reports_raw':
+            feature_vector_dim += 6
+        elif config['hyperparams']['tabular_encoder']['type'] == 'reports_token':
+            feature_vector_dim += embed_dim
 
     return feature_vector_dim
     
@@ -95,33 +103,52 @@ class MultiModalDriverClassifier(nn.Module):
         super(MultiModalDriverClassifier, self).__init__()
 
         self.image_encoder = get_image_encoder(kwargs)
+        self.embedding_dim = kwargs['hyperparams']['embedding_dim']
         self.use_location = kwargs['hyperparams']['loc_encoder']['use']
         if self.use_location:
             self.loc_encoder = LocationEncoder(positional_embedding=kwargs['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **kwargs)
         self.classifier = get_classifier(output_classes, kwargs)
 
-        self.tabular_encoder = nn.Linear(6, out_features=kwargs['hyperparams']['embedding_dim'], bias = True)
+        self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
+        if self.use_tabular:
+            self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
+            if self.tabular_processing == 'reports_token':
+                self.tabular_encoder = nn.Linear(6, out_features=self.embedding_dim, bias = True)
+        
 
-    def forward(self, image_data, location, expansion_rates, forestloss_patch=None):
+    def forward(self, image_data, location, tabular_data, forestloss_patch=None):
 
         image_features = self.image_encoder(image_data, forestloss_patch)
 
+        features = [image_features]
+
         if self.use_location:
             loc_features = self.loc_encoder(location)
-            if len(image_features.shape) ==  len(loc_features.shape):
-                assert len(image_features.shape) == 2, 'unexpected'
-                tokens = torch.stack([image_features, loc_features])
-            elif len(image_features.shape) == 3 and len(loc_features.shape) == 2:
-                tokens = torch.cat([image_features, loc_features.unsqueeze(dim=0)])
-        else:
-            tokens = image_features if len(image_features.shape) == 3 else image_features.unsqueeze(dim=0)
+            features.append(loc_features)
+            #if len(image_features.shape) ==  len(loc_features.shape):
+            #    assert len(image_features.shape) == 2, 'unexpected'
+            #    tokens = torch.stack([image_features, loc_features])
+            #elif len(image_features.shape) == 3 and len(loc_features.shape) == 2:
+            #    tokens = torch.cat([image_features, loc_features.unsqueeze(dim=0)])
+        #else:
+        #    tokens = image_features if len(image_features.shape) == 3 else image_features.unsqueeze(dim=0)
         
         #TODO: test both just concatenating the values and concatenating the encoded values through the fc layer "tabular_encoder"
-        commodity_expansion_token = self.tabular_encoder(expansion_rates)
+        #commodity_expansion_token = self.tabular_encoder(expansion_rates).transpose(0,1)
+        #tokens.append(commodity_expansion_token)
         
-        tokens =  torch.cat([tokens, commodity_expansion_token.transpose(0,1)])
+        #tokens = torch.cat([tokens, commodity_expansion_token])
+        if self.use_tabular:
+            if self.tabular_processing == 'reports_token':
+                tabular_data = self.tabular_encoder(tabular_data)
+            elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
+                tabular_data = tabular_data.unsqueeze(1)
+                tabular_data = tabular_data.repeat(1, self.embedding_dim)
+            
 
-        #Now tokens is a tensor of TxBxD, with T=number of tokens
-        predictions = self.classifier(tokens)
+            features.append(tabular_data)
+
+
+        predictions = self.classifier(features)
 
         return predictions

@@ -8,7 +8,7 @@
         "tabular_production_data": "/home/jan/Documents/EPFL/project_2/data/tmp/faostat_reports.csv",
         "output_folder":  "models_trained/"
     },
-    "num_workers" : 0,
+    "num_workers" : 32,
 
     "hyperparams" :{
         "seed": [424],
@@ -25,8 +25,6 @@
         "embedding_dim" : [128],
         
 
-
-
         "image_encoder": [
 
             {
@@ -42,12 +40,25 @@
             {
                 "use" : "False",
                 "positional_embedding": "cartesian3d"
+            }
+        ],   
+
+        "tabular_encoder": [
+
+
+            {
+                "use" : "False"
             },
             {
                 "use" : "True",
-                "positional_embedding": "cartesian3d"
+                "type" : "country_id"
+            },
+            {
+                "use" : "True",
+                "type" : "reports_token"
             }
-        ],   
+        ],
+
         
         "classifier": [
 
@@ -84,7 +95,7 @@
 
 
     "wandb": {
-        "log_to_wandb" : "False",
+        "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
         "group": "tabular data regular split 4/4"

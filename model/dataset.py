@@ -58,9 +58,12 @@ class DriverDataset(Dataset):
             self.forestloss_transform = kwargs['forestloss_transform']
 
 
-        self.FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
-
-
+        self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
+        if self.use_tabular:
+            self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
+            self.FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
+        else:
+            self.tabular_processing = 'country_id' #This is just so that when I don't use tabular data, it doesn't crash while keeping the inputs constant
 
     def __len__(self):
         return len(self.img_labels)
@@ -154,13 +157,18 @@ class DriverDataset(Dataset):
                 #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
 
-        ### Adding tabular data
+
+        ### Adding tabular data - I can always add this even if they are not used - does not take a lot of time
         country = self.img_labels.iloc[idx].country
-        
-        commodity_production = self._get_static_commodity_expansion_rates(country)
-        #country_id = torch.Tensor(self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0])
-        
-        inputs  = [image_data, loc, commodity_production, forestloss_data]
+        if self.tabular_processing == 'country_id':
+            tabular_data = torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0]])
+        else:
+            tabular_data = self._get_static_commodity_expansion_rates(country)
+        tabular_data = tabular_data.squeeze()
+
+
+
+        inputs  = [image_data, loc, tabular_data, forestloss_data]
         #inputs  = [image_data, loc, commodity_production, forestloss_data]
 
         return inputs, label

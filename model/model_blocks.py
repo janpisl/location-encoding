@@ -34,13 +34,17 @@ class TransformerClassifier(nn.Module):
         """_summary_
 
         Args:
-            tokens (Tensor): set of tokens, shape TxBxD (n_tokens, batch, embedding_dim)
+            tokens (list): set of tokens, each item in list is either a single token of shape BxD (batch, embedding_dim),
+                            or a group of tokens (shape NxBxD)
+
         """
+        #Get all tokens in shape NxBxD and concat them together into a tensor of NxBxD (num_tokens, batch, embed_dim)
+        tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in tokens], dim=0)
 
         #Make cls_token tensor in shape (1,B,D)
         cls_tokens = self.cls_token.repeat(tokens.shape[1],1).unsqueeze(dim=0)
 
-        features = torch.concat([cls_tokens, tokens])
+        features = torch.cat([cls_tokens, tokens])
 
         cls_token_output = self.transformer_enc(features)[0]
         predictions = self.classifier(cls_token_output) 
@@ -59,7 +63,8 @@ class FullyConnectedClassifier(nn.Module):
         """_summary_
 
         Args:
-            tokens (Tensor): set of tokens, shape TxBxD (n_tokens, batch, embedding_dim)
+            tokens (list): set of tokens, each item in list is either a single token of shape BxD (batch x any_dimension),
+                            or a group of tokens (shape NxBxD)
         """
 
         '''
@@ -67,8 +72,17 @@ class FullyConnectedClassifier(nn.Module):
         n_tokens, batch_size, embedding_dim = tokens.shape
         tokens.view(batch_size, embedding_dim*n_tokens)
         '''
-        tokens = list(tokens)
-        tokens = torch.cat(tokens, dim=1)
+        #TODO: this is pretty stupid but i can't figure out the normal way to do it atm
+        processed_tokens = []
+        for token in tokens:
+            if len(token.shape) == 2:
+                processed_tokens.append(token)
+            elif len(token.shape) == 3:
+                token = [i for i in token]
+                for i in token:
+                    processed_tokens.append(i)
+
+        tokens = torch.cat(processed_tokens, dim=1)
 
         return self.classifier(tokens)
 

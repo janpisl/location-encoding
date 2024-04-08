@@ -75,6 +75,8 @@ class FullyConnectedClassifier(nn.Module):
         #TODO: this is pretty stupid but i can't figure out the normal way to do it atm
         processed_tokens = []
         for token in tokens:
+            if len(token.shape) == 1:
+                processed_tokens.append(token.unsqueeze(1))
             if len(token.shape) == 2:
                 processed_tokens.append(token)
             elif len(token.shape) == 3:

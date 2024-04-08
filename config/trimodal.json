@@ -11,7 +11,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [424],
+        "seed": [420],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1000],
@@ -19,8 +19,7 @@
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [10],
-
+        "early_stopping_patience": [50],
 
         "embedding_dim" : [128],
         
@@ -38,7 +37,10 @@
 
         "loc_encoder": [
             {
-                "use" : "False",
+                "use" : "False"
+            },
+            {
+                "use" : "True",
                 "positional_embedding": "cartesian3d"
             }
         ],   
@@ -55,6 +57,10 @@
             },
             {
                 "use" : "True",
+                "type" : "reports_raw"
+            },
+            {
+                "use" : "True",
                 "type" : "reports_token"
             }
         ],
@@ -66,10 +72,48 @@
                 "type" : "fc",
                 "transformer_layers": 3,
                 "attention_heads":8
-            }
+            },
+            {
+                "type" : "transformer",
+                "transformer_layers": 3,
+                "attention_heads":8
+            }            
         ],
 
         "folds_to_split" : [
+
+            {
+                "column" : "split",
+                "mapping"  : {
+                    "0" : "val",
+                    "1" : "train",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "val",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "train",
+                    "2" : "val",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
 
             {
                 "column" : "split",
@@ -81,7 +125,10 @@
                     "4" : "test"
                 }
             }
+
+
         ],
+
         "forestloss_params": [
             {
                 "kernel_size" : 15,
@@ -95,9 +142,9 @@
 
 
     "wandb": {
-        "log_to_wandb" : "True",
+        "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "tabular data regular split 4/4"
+        "group": "tabular data 4-fold crossval 5/4"
     }
 }

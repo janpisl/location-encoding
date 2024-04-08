@@ -11,7 +11,7 @@
     "num_workers" : 0,
 
     "hyperparams" :{
-        "seed": [424],
+        "seed": [420],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1],
@@ -19,8 +19,7 @@
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [10],
-
+        "early_stopping_patience": [50],
 
         "embedding_dim" : [128],
         
@@ -37,8 +36,9 @@
         ],
 
         "loc_encoder": [
+
             {
-                "use" : "False",
+                "use" : "True",
                 "positional_embedding": "cartesian3d"
             }
         ],   
@@ -46,35 +46,37 @@
         "tabular_encoder": [
 
             {
-                "use" : "True",
-                "type" : "reports_raw"
-            }
-
+                "use" : "False"            }
         ],
 
         
         "classifier": [
 
+
             {
                 "type" : "fc",
                 "transformer_layers": 3,
                 "attention_heads":8
-            }
+            }            
         ],
 
         "folds_to_split" : [
+
 
             {
                 "column" : "split",
                 "mapping"  : {
                     "0" : "train",
-                    "1" : "train",
-                    "2" : "train",
-                    "3" : "val",
+                    "1" : "val",
+                    "2" : "test",
+                    "3" : "test",
                     "4" : "test"
                 }
             }
+
+
         ],
+
         "forestloss_params": [
             {
                 "kernel_size" : 15,
@@ -91,6 +93,6 @@
         "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "tabular data regular split 4/4"
+        "group": "tabular data 4-fold crossval 5/4"
     }
 }

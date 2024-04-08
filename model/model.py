@@ -98,7 +98,6 @@ def _get_feature_vector_size(config):
 
 class MultiModalDriverClassifier(nn.Module):
 
-
     def __init__(self, output_classes, **kwargs):
         super(MultiModalDriverClassifier, self).__init__()
 
@@ -133,9 +132,8 @@ class MultiModalDriverClassifier(nn.Module):
                 tabular_data = tabular_data.unsqueeze(1)
                 tabular_data = tabular_data.repeat(1, self.embedding_dim)
             
-
             features.append(tabular_data)
-
+        
         predictions = self.classifier(features)
 
         return predictions

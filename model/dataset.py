@@ -95,12 +95,6 @@ class DriverDataset(Dataset):
         
         return torch.Tensor(values)
 
-    def _get_country_id(self, country): 
-
-        idx = self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0]
-
-        return torch.Tensor(idx)
-
 
     def _get_dynamic_commodity_expansion_rates(self, country, min_year=2000, max_year=2020): #TODO: Max year should be 2022, this is temporary
         assert False, 'for now, the values are precomputed per-country'
@@ -161,12 +155,11 @@ class DriverDataset(Dataset):
         ### Adding tabular data - I can always add this even if they are not used - does not take a lot of time
         country = self.img_labels.iloc[idx].country
         if self.tabular_processing == 'country_id':
+            
             tabular_data = torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0]])
         else:
             tabular_data = self._get_static_commodity_expansion_rates(country)
         tabular_data = tabular_data.squeeze()
-
-
 
         inputs  = [image_data, loc, tabular_data, forestloss_data]
         #inputs  = [image_data, loc, commodity_production, forestloss_data]

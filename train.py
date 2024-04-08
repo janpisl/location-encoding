@@ -148,8 +148,21 @@ def initialize_wandb(config, model, train_dl, val_dl):
     #f"""4 img; {config['hyperparams']['image_encoder']['type']}
         #+ {config['hyperparams']['classifier']['type']} """
 
+    if config['hyperparams']['loc_encoder']['use'] is True:
+        loc_enc_name = config['hyperparams']['loc_encoder']['positional_embedding']
+    else:
+        loc_enc_name = "no"
+
+    if config['hyperparams']['tabular_encoder']['use'] is True:
+        tab_enc_name = config['hyperparams']['tabular_encoder']['type']
+    else:
+        tab_enc_name = "no"
+
+
     try:
-        name = f"""train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
+        name = f"""
+            {loc_enc_name} loc ; {tab_enc_name} tab;  {config['hyperparams']['classifier']['type']} cls;
+            train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
     except:
         name = None
@@ -240,19 +253,20 @@ if __name__ == '__main__':
         main(config)'''
 
     for variant in permutations_dicts:
+        #try:
+        pprint.pprint(variant)
+        config['hyperparams'] = variant
+        utils.seed_everything(config['hyperparams']['seed'])
+        config = utils.parse_boolean_recursion(config)
         try:
-            utils.seed_everything(config['hyperparams']['seed'])
-            config['hyperparams'] = variant
-            config = utils.parse_boolean_recursion(config)
-            try:
-                wandb.finish()
-            except:
-                pass
-            main(config)
-        except Exception as e:
-            text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_5_4.txt", "a") as sink:
-                sink.write(text)
+            wandb.finish()
+        except:
+            pass
+        main(config)
+        #except Exception as e:
+        #    text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
+        #    with open("logs_8_4.txt", "a") as sink:
+        #        sink.write(text)
 
 
 

@@ -54,7 +54,7 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
     preds_batches = []
     targets_batches = []
 
-    for i, (train_batch, labels_batch) in enumerate(dataloader):
+    for train_batch, labels_batch in dataloader:
 
         image_batch, loc_batch, expansion_rates_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), train_batch[3].to(device), labels_batch.to(device)
         y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
@@ -148,8 +148,9 @@ def initialize_wandb(config, model, train_dl, val_dl):
     #f"""4 img; {config['hyperparams']['image_encoder']['type']}
         #+ {config['hyperparams']['classifier']['type']} """
 
+    '''
     if config['hyperparams']['loc_encoder']['use'] is True:
-        loc_enc_name = config['hyperparams']['loc_encoder']['positional_embedding']
+        loc_enc_name = "yes" #config['hyperparams']['loc_encoder']['positional_embedding']
     else:
         loc_enc_name = "no"
 
@@ -165,7 +166,20 @@ def initialize_wandb(config, model, train_dl, val_dl):
             train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
     except:
+        name = None'''
+    
+
+
+    try:
+        name = f"""
+            img enc: {config['hyperparams']['image_encoder']['use']}; {config['hyperparams']['classifier']['type']} cls;
+            train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
+            val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
+    except:
         name = None
+
+
+
     
     wandb.init(
         project=config['wandb']['project'], 
@@ -246,27 +260,26 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
-        config['hyperparams'] = variant
-        utils.seed_everything(config['hyperparams']['seed'])
-        config = utils.parse_boolean_recursion(config)
-        main(config)'''
-
     for variant in permutations_dicts:
-        #try:
-        pprint.pprint(variant)
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        try:
-            wandb.finish()
-        except:
-            pass
         main(config)
-        #except Exception as e:
-        #    text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-        #    with open("logs_8_4.txt", "a") as sink:
-        #        sink.write(text)
+
+    '''for variant in permutations_dicts:
+        try:
+            config['hyperparams'] = variant
+            utils.seed_everything(config['hyperparams']['seed'])
+            config = utils.parse_boolean_recursion(config)
+            try:
+                wandb.finish()
+            except:
+                pass
+            main(config)
+        except Exception as e:
+            text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
+            with open("logs_10_4.txt", "a") as sink:
+                sink.write(text)'''
 
 
 

@@ -23,7 +23,9 @@ class TransformerClassifier(nn.Module):
             nhead=config['hyperparams']['classifier']['attention_heads'])
         self.transformer_enc = nn.TransformerEncoder(
             encoder_layer, 
-            num_layers=config['hyperparams']['classifier']['transformer_layers'])
+            num_layers=config['hyperparams']['classifier']['transformer_layers'],
+            enable_nested_tensor=False #Get rid of annoying warnings
+            )
 
         self.cls_token = nn.Parameter(torch.randn(embedding_dim))
 
@@ -162,6 +164,29 @@ class TemporalWrapperV2(nn.Module):
         return out_reshaped
 
 
+def load_seco_weights(net, path='../pretrained_models/seco_resnet18_1m.ckpt'):
+
+    #https://github.com/Lightning-AI/pytorch-lightning/issues/15451#issuecomment-1298724879
+    from pytorch_lightning.utilities.migration import pl_legacy_patch
+    with pl_legacy_patch():
+        seco_weights = torch.load(path)
+    enc_q = {k:v for k,v in seco_weights['state_dict'].items() if k.startswith('encoder_q')}
+    enc_q_v2 = {k.replace("encoder_q.", ""):v for k,v in enc_q.items()}
+    enc_q_v2['conv1.weight'] = enc_q_v2.pop('0.weight')
+    enc_q_v2['bn.weight'] = enc_q_v2.pop('1.weight')
+    enc_q_v2['bn1.bias'] = enc_q_v2.pop('1.bias')
+    enc_q_v2['bn1.running_mean'] = enc_q_v2.pop('1.running_mean')
+    enc_q_v2['bn1.running_var'] = enc_q_v2.pop('1.running_var')
+    enc_q_v2['bn1.num_batches_tracked'] = enc_q_v2.pop('1.num_batches_tracked')
+    enc_q_v3 = {k.replace("4.", "layer1."):v for k,v in enc_q_v2.items()}
+    enc_q_v3 = {k.replace("5.", "layer2."):v for k,v in enc_q_v3.items()}
+    enc_q_v3 = {k.replace("6.", "layer3."):v for k,v in enc_q_v3.items()}
+    enc_q_v3 = {k.replace("7.", "layer4."):v for k,v in enc_q_v3.items()}
+
+    net.load_state_dict(enc_q_v3, strict=False)
+
+
+
 def get_resnet(resnet_type, output_size=None, **kwargs):
 
     pretrained = kwargs['hyperparams']['image_encoder']['pretrained_backbone']
@@ -174,14 +199,21 @@ def get_resnet(resnet_type, output_size=None, **kwargs):
         net = resnet50(weights="DEFAULT" if pretrained else None)
     else:
         raise ValueError("Unknown resnet type")
+
+
     
-        
     if kwargs['hyperparams']['use_forestloss']:
         assert resnet_type == 'resnet18', 'Other types of resnet not supported atm'
         modified_net = ModifiedResNet18(models.resnet.BasicBlock, [2, 2, 2, 2], apply_after_layer=kwargs['hyperparams']['forestloss_params']['apply_after_layer'])
         modified_net.load_state_dict(net.state_dict())
         net = modified_net
 
+    try:
+        use_seco = kwargs['hyperparams']['image_encoder']['seco_weights']
+    except KeyError:
+        use_seco = False
+    if use_seco:
+        load_seco_weights(net)
 
     if pretrained: # Create a convlayer and spread the RGB pretrained weights to as many channels as there in the inputs
         net = set_up_pretrained_resnet(net, in_channels=kwargs['hyperparams']['in_channels'])  
@@ -200,6 +232,7 @@ def get_resnet(resnet_type, output_size=None, **kwargs):
         net.fc = nn.Linear(net.fc.in_features, out_features=output_size, bias = True) # The number of output classes doesn't matter, it will get re-initialized
 
     return net
+
 
 
 def set_up_pretrained_resnet(net, in_channels):
@@ -221,9 +254,6 @@ def set_up_pretrained_resnet(net, in_channels):
     net.conv1.weight = nn.Parameter(new_weights)
 
     return net
-
-
-
 
 
 

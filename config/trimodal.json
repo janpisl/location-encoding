@@ -14,51 +14,37 @@
         "seed": [420],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1000],
+        "epochs": [1],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [50],
+        "early_stopping_patience": [25],
 
         "embedding_dim" : [128],
         
 
         "image_encoder": [
-
+             
             {
-                "use" : "True",
+                "use" : "False",
                 "type" : "cnn",
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True"
     
-            }
+            }         
         ],
 
         "loc_encoder": [
-            {
-                "use" : "False"
-            },
+
             {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
-            }
+            }        
         ],   
 
         "tabular_encoder": [
 
-
-            {
-                "use" : "False"
-            },
-            {
-                "use" : "True",
-                "type" : "country_id"
-            },
-            {
-                "use" : "True",
-                "type" : "reports_raw"
-            },
             {
                 "use" : "True",
                 "type" : "reports_token"
@@ -145,6 +131,6 @@
         "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "tabular data 4-fold crossval 5/4"
+        "group": "no image 12/4"
     }
 }

@@ -159,10 +159,8 @@ class DriverDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        #Load image(s)
         image_data = self.load_images(idx)  
 
-        #Get label
         class_name = self.img_labels.driver.iloc[idx]
         label = LABEL_MAPPING[class_name]
 

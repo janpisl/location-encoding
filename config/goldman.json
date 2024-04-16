@@ -64,38 +64,6 @@
 
         "folds_to_split" : [
 
-            {
-                "column" : "split",
-                "mapping"  : {
-                    "0" : "val",
-                    "1" : "train",
-                    "2" : "train",
-                    "3" : "train",
-                    "4" : "test"
-                }
-            },
-
-            {
-                "column" : "split",
-                "mapping"  : {
-                    "0" : "train",
-                    "1" : "val",
-                    "2" : "train",
-                    "3" : "train",
-                    "4" : "test"
-                }
-            },
-
-            {
-                "column" : "split",
-                "mapping"  : {
-                    "0" : "train",
-                    "1" : "train",
-                    "2" : "val",
-                    "3" : "train",
-                    "4" : "test"
-                }
-            },
 
             {
                 "column" : "split",

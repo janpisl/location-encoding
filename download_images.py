@@ -5,16 +5,15 @@ This script downloads images from Earth Engine according to given parameters.
 
 Example of use:
 
-python download_images.py   --save_path data/images/dataset_v4/55k/one_image\
-    --sensor S2\
+python download_images.py   --save_path data/images/dataset_v4/55k/SR_four_images\
     --sample_points_path data/labels/dataset_v4/labels_55k.csv\
     --bands S2_RGBNIR\
+    --sensor S2\
     --start_date 2022-01-01\
     --end_date 2023-01-01\
     --num_workers 32 \
-    --period_length 12M\
+    --period_length 3M\
     --buffer 600\
-    --processing_level TOA \
     --target_shape 120 120
 
 '''
@@ -100,14 +99,14 @@ class ShapeFileSampler(GeoSampler):
 
 
 
-def get_collection(sensor, processing_level):
+def get_collection(sensor):
 
-    if sensor == 'S2' and processing_level == 'TOA':
-        coll = ee.ImageCollection("COPERNICUS/S2_HARMONIZED")
-    elif sensor == 'L8' and processing_level == 'SR':
+    if sensor == 'S2':
+        coll = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+    elif sensor == 'L8':
         coll = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
     else:
-        NotImplementedError("Only S2 (TOA) and L8 (SR) implemented at the moment")
+        NotImplementedError("Only S2 (SR) and L8 (SR) implemented at the moment")
         
     return coll
 
@@ -445,9 +444,8 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--save_path', type=str,)
 
-    parser.add_argument('--sensor', type=str, default='S2')
     parser.add_argument('--bands', type=str, default='S2_RGBNIR')
-    parser.add_argument('--processing_level', type=str, default='TOA') 
+    parser.add_argument('--sensor', type=str, default='S2')
     
     parser.add_argument('--buffer', type=int, default=750)
 
@@ -469,7 +467,7 @@ if __name__ == '__main__':
 
     sensor = args.sensor
     buffer = args.buffer    
-    collection = get_collection(sensor=sensor, processing_level=args.processing_level)
+    collection = get_collection(sensor)
 
     sampler = ShapeFileSampler(args.sample_points_path)
     start_index = sampler.index

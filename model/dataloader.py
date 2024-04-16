@@ -33,7 +33,6 @@ class SelectBands(Module):
             self.band_indices = [True, True, True, True, False] #The default is RGBNIR (without the QA60 band)
 
     def forward(self, img):
-
         #in temporal case, the first dimension is temporal - band indices are 2nd
         if len(img.shape) == 3:
             return img[self.band_indices]

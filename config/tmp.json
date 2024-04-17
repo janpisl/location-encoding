@@ -43,6 +43,7 @@
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
             }
+
         ],   
 
         "tabular_encoder": [
@@ -50,7 +51,7 @@
             {
                 "use" : "True",
                 "type" : "reports_token"
-            }
+            }         
         ],
 
         
@@ -59,7 +60,7 @@
 
             {
                 "type" : "transformer",
-                "transformer_layers": 3,
+                "transformer_layers": 6,
                 "attention_heads":8
             }            
         ],

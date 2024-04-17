@@ -149,15 +149,6 @@ def initialize_wandb(config, model, train_dl, val_dl):
         #+ {config['hyperparams']['classifier']['type']} """
 
     '''
-    if config['hyperparams']['loc_encoder']['use'] is True:
-        loc_enc_name = "yes" #config['hyperparams']['loc_encoder']['positional_embedding']
-    else:
-        loc_enc_name = "no"
-
-    if config['hyperparams']['tabular_encoder']['use'] is True:
-        tab_enc_name = config['hyperparams']['tabular_encoder']['type']
-    else:
-        tab_enc_name = "no"
 
 
     try:
@@ -169,10 +160,19 @@ def initialize_wandb(config, model, train_dl, val_dl):
         name = None'''
     
 
+    if config['hyperparams']['loc_encoder']['use'] is True:
+        loc_enc_name = "yes" #config['hyperparams']['loc_encoder']['positional_embedding']
+    else:
+        loc_enc_name = "no"
+
+    if config['hyperparams']['tabular_encoder']['use'] is True:
+        tab_enc_name = config['hyperparams']['tabular_encoder']['type']
+    else:
+        tab_enc_name = "no"
 
     try:
         name = f"""
-            img enc: {config['hyperparams']['image_encoder']['use']}; {config['hyperparams']['classifier']['type']} cls;
+            {config['hyperparams']['image_encoder']['use']} img; {loc_enc_name} loc;  {tab_enc_name} tabular; 
             train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
     except:
@@ -260,13 +260,13 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)
+        main(config)'''
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         try:
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
@@ -278,8 +278,8 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_10_4.txt", "a") as sink:
-                sink.write(text)'''
+            with open("logs_16_4.txt", "a") as sink:
+                sink.write(text)
 
 
 

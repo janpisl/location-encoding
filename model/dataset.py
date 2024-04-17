@@ -62,8 +62,8 @@ class DriverDataset(Dataset):
 
 
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
+        self.tabular_production_data = pd.read_csv(kwargs['data']['tabular_production_data']) #Open even if not used in modeling to avoid crashing dataloader
         if self.use_tabular:
-            self.tabular_production_data = pd.read_csv(kwargs['data']['tabular_production_data'])
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             self.FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
         else:
@@ -184,7 +184,6 @@ class DriverDataset(Dataset):
                 #TODO: find bug - forestloss_data should be just integer numbers but they are not
                 #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
-
 
         ### Adding tabular data - I can always add this even if they are not used - does not take a lot of time
         country = self.img_labels.iloc[idx].country

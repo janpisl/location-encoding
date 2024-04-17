@@ -30,6 +30,7 @@ class TransformerClassifier(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(embedding_dim))
 
         self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
+        self.aux_tabular = nn.Linear(embedding_dim, out_features=3, bias = True)
 
         
     def forward(self, tokens):
@@ -50,8 +51,9 @@ class TransformerClassifier(nn.Module):
 
         cls_token_output = self.transformer_enc(features)[0]
         predictions = self.classifier(cls_token_output) 
+        tabular_scalar = self.aux_tabular(cls_token_output) 
         
-        return predictions
+        return predictions, tabular_scalar
 
 
 class FullyConnectedClassifier(nn.Module):

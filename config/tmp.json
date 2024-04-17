@@ -32,7 +32,7 @@
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
                 "moco_weights" : "True",
-                "freeze" : "True"
+                "freeze" : "False"
 
             }
         ],

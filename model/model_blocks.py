@@ -30,7 +30,7 @@ class TransformerClassifier(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(embedding_dim))
 
         self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
-        self.aux_tabular = nn.Linear(embedding_dim, out_features=3, bias = True)
+        self.aux_tabular = nn.Linear(embedding_dim, out_features=1, bias = True)
 
         
     def forward(self, tokens):

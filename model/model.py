@@ -132,10 +132,6 @@ class MultiModalDriverClassifier(nn.Module):
                 self.tabular_encoder = nn.Linear(5, out_features=self.embedding_dim, bias = True)
 
         self.indices = torch.tensor([0, 4, 2, 7, 3, 8])
-        self.pasture = torch.tensor([0])
-        self.palm_oil = torch.tensor([4])
-        self.other = torch.tensor([2,7,3,8])
-
 
     def forward(self, image_data, location, tabular_data, forestloss_patch=None):
         tabular_data_raw = tabular_data
@@ -167,10 +163,10 @@ class MultiModalDriverClassifier(nn.Module):
         
         predictions, tabular_scalar = self.classifier(features)
         #from ptrblk: "You can simply use a * b or torch.mul(a, b)."
-        tabular_data_all_cls[:, self.other] = tabular_data_all_cls[:, self.other] * tabular_scalar[:, 0].unsqueeze(1)
-        tabular_data_all_cls[:, self.pasture] = tabular_data_all_cls[:, self.pasture] * tabular_scalar[:, 1].unsqueeze(1)
-        tabular_data_all_cls[:, self.palm_oil] = tabular_data_all_cls[:, self.palm_oil] * tabular_scalar[:, 2].unsqueeze(1)
-        #tabular_data_all_cls = tabular_data_all_cls * tabular_scalar 
+        #tabular_data_all_cls[:, self.other] = tabular_data_all_cls[:, self.other] * tabular_scalar[:, 0].unsqueeze(1)
+        #tabular_data_all_cls[:, self.pasture] = tabular_data_all_cls[:, self.pasture] * tabular_scalar[:, 1].unsqueeze(1)
+        #tabular_data_all_cls[:, self.palm_oil] = tabular_data_all_cls[:, self.palm_oil] * tabular_scalar[:, 2].unsqueeze(1)
+        tabular_data_all_cls[:, self.indices] = tabular_data_all_cls[:, self.indices] * tabular_scalar
         
         predictions = predictions * tabular_data_all_cls
 

@@ -5,7 +5,7 @@
         "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v4/labels_55k.csv",
         "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/SR_four_images",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v4_nonbinarized",
-        "tabular_production_data": "/home/jan/Documents/EPFL/project_2/data/tmp/faostat_reports.csv",
+        "tabular_production_data": "/home/jan/Documents/EPFL/project_2/data/tmp/deduce_tabular.csv",
         "output_folder":  "models_trained/"
     },
     "num_workers" : 32,
@@ -31,8 +31,8 @@
                 "type" : "cnn",
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
-                "moco_weights" : "True",
-                "freeze" : "True"
+                "moco_weights" : "False",
+                "freeze" : "False"
 
             }
         ],
@@ -49,8 +49,8 @@
         "tabular_encoder": [
 
             {
-                "use" : "True",
-                "type" : "reports_token"
+                "use" : "False",
+                "type" : "deduce_token"
             }         
         ],
 
@@ -60,7 +60,7 @@
 
             {
                 "type" : "transformer",
-                "transformer_layers": 6,
+                "transformer_layers": 3,
                 "attention_heads":8
             }            
         ],
@@ -96,6 +96,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": ""
+        "group": "26/4 deduce data"
     }
 }

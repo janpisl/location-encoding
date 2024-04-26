@@ -8,4 +8,4 @@ misc/
 */.ipynb_checkpoints/
 
 last_idx.txt
-logs.txt
+logs*

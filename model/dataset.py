@@ -66,6 +66,7 @@ class DriverDataset(Dataset):
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             self.FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
+            self.faostat_indices = torch.tensor([0, 4, 2, 7, 3, 8]) #The indices of the FAOSTAT classes in the label space 
         else:
             self.tabular_processing = 'country_id' #This is just so that when I don't use tabular data, it doesn't crash while keeping the inputs constant
 
@@ -76,6 +77,13 @@ class DriverDataset(Dataset):
             #self.goldman_data = pd.read_csv(kwargs['data']['goldman_data'])
             self.goldman_data = pd.read_csv('data/tmp/goldman.csv')
             self.goldman_cols = ['oil_palm_loss', 'soy_loss', 'cocoa_loss', 'pasture_loss', 'coffee_loss']
+        
+        self.deduce_classes = ['Pasture', 'Forest plantation',  
+                               'Soya beans', 'Coffee, green', 'Oil palm fruit',
+                               'Cocoa beans', 'Natural rubber in primary forms']
+        
+        self.deduce_indices = torch.tensor([0,1,2,3,4,7,8]) #The indices of the FAOSTAT classes in the label space 
+
 
 
     def __len__(self):
@@ -103,7 +111,32 @@ class DriverDataset(Dataset):
         return loaded_data
     
 
+
     def _get_static_commodity_expansion_rates(self, country): #TODO: Max year should be 2022, this is temporary
+        
+        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
+        values = country_data[self.FAOSTAT_classes].values
+        #np.random.shuffle(values[0]) #as a sanity check, random shuffle of the values 
+        exp_rates = torch.zeros((12), dtype=torch.float)
+        exp_rates[self.faostat_indices] = torch.Tensor(values.squeeze())
+        
+        return exp_rates
+    
+    def _get_deduce_commodity_rates(self, country):
+        
+        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
+        values = country_data[self.deduce_classes].values
+        #np.random.shuffle(values[0]) #as a sanity check, random shuffle of the values 
+        exp_rates = torch.zeros((12), dtype=torch.float)
+        exp_rates[self.deduce_indices] = torch.Tensor(values.squeeze())
+        exp_rates = torch.nan_to_num(exp_rates, nan=0.0)
+        return exp_rates
+
+
+
+
+    def old_get_static_commodity_expansion_rates(self, country): #TODO: Max year should be 2022, this is temporary
+        
 
         country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
         values = country_data[self.FAOSTAT_classes].values
@@ -191,12 +224,14 @@ class DriverDataset(Dataset):
             tabular_data = torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0]])
         elif self.tabular_processing == 'goldman_token':
             tabular_data = self._get_goldman_commodity_rates(self.img_labels.goldman_index.iloc[idx])
+        elif self.tabular_processing == 'deduce_token':
+            tabular_data = self._get_deduce_commodity_rates(country)
         else:
             tabular_data = self._get_static_commodity_expansion_rates(country)
+            #tabular_data = self.old_get_static_commodity_expansion_rates(country)
         tabular_data = tabular_data.squeeze()
-
+        
         inputs  = [image_data, loc, tabular_data, forestloss_data]
-        #inputs  = [image_data, loc, commodity_production, forestloss_data]
 
         return inputs, label
     

@@ -42,7 +42,7 @@ LAST_IDX_LOGFILE = "misc/last_idx.txt"
 
 
 BANDS = {
-    "S2" : ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B10', 'B11', 'B12'],
+    "S2" : ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12'],
     "S2_RGBNIR": ['B2', 'B3', 'B4', 'B8'],
     #"L8" : ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10', "B11", "QA_PIXEL"] # this is TOA
     "L8" : ['SR_B1', 'SR_B2', 'SR_B3', 'SR_B4', 'SR_B5', 'SR_B6', 'SR_B7', 'QA_PIXEL'] # this is SR

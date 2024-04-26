@@ -126,13 +126,14 @@ class MultiModalDriverClassifier(nn.Module):
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
-            if self.tabular_processing == 'reports_token':
-                self.tabular_encoder = nn.Linear(6, out_features=self.embedding_dim, bias = True)
+            if self.tabular_processing == 'reports_token' or self.tabular_processing == 'deduce_token':
+                #self.tabular_encoder = nn.Linear(6, out_features=self.embedding_dim, bias = True)
+                self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
             elif self.tabular_processing == 'goldman_token':
                 self.tabular_encoder = nn.Linear(5, out_features=self.embedding_dim, bias = True)
 
     def forward(self, image_data, location, tabular_data, forestloss_patch=None):
-
+        
         if self.use_image:
             image_features = self.image_encoder(image_data, forestloss_patch)
             features = [image_features]
@@ -144,7 +145,7 @@ class MultiModalDriverClassifier(nn.Module):
             features.append(loc_features)
 
         if self.use_tabular:
-            if self.tabular_processing == 'reports_token' or self.tabular_processing == 'goldman_token':
+            if 'token' in self.tabular_processing:
                 tabular_data = self.tabular_encoder(tabular_data)
             elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
                 tabular_data = tabular_data.unsqueeze(1)

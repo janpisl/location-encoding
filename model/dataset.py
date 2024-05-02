@@ -62,28 +62,23 @@ class DriverDataset(Dataset):
 
 
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
-        self.tabular_production_data = pd.read_csv(kwargs['data']['tabular_production_data']) #Open even if not used in modeling to avoid crashing dataloader
         if self.use_tabular:
-            self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
-            self.FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
-            self.faostat_indices = torch.tensor([0, 4, 2, 7, 3, 8]) #The indices of the FAOSTAT classes in the label space 
-        else:
-            self.tabular_processing = 'country_id' #This is just so that when I don't use tabular data, it doesn't crash while keeping the inputs constant
-
-
-        #self.use_goldman_data = kwargs['hyperparams']['tabular_encoder']['use_goldman_data22']
-        self.use_goldman_data = True
-        if self.use_goldman_data:
-            #self.goldman_data = pd.read_csv(kwargs['data']['goldman_data'])
-            self.goldman_data = pd.read_csv('data/tmp/goldman.csv')
-            self.goldman_cols = ['oil_palm_loss', 'soy_loss', 'cocoa_loss', 'pasture_loss', 'coffee_loss']
-        
-        self.deduce_classes = ['Pasture', 'Forest plantation',  
-                               'Soya beans', 'Coffee, green', 'Oil palm fruit',
-                               'Cocoa beans', 'Natural rubber in primary forms']
-        
-        self.deduce_indices = torch.tensor([0,1,2,3,4,7,8]) #The indices of the FAOSTAT classes in the label space 
-
+            self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type'] #Should be 'country_id' or 'token'
+            self.tabular_dataset = kwargs['hyperparams']['tabular_encoder']['dataset'].lower()
+            if self.tabular_dataset == 'faostat':
+                self.tabular_data = pd.read_csv(kwargs['data']['faostat_data']) 
+                self.tabular_column_names = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
+                self.tabular_cls_indices = torch.tensor([0, 4, 2, 7, 3, 8]) 
+            elif self.tabular_dataset == 'goldman':
+                self.tabular_data = pd.read_csv(kwargs['data']['goldman_data'])
+                self.tabular_column_names = ['oil_palm_loss', 'soy_loss', 'cocoa_loss', 'pasture_loss', 'coffee_loss']
+                self.tabular_cls_indices = torch.tensor([4, 2, 7, 0, 3]) 
+            elif self.tabular_dataset == 'deduce':
+                self.tabular_data = pd.read_csv(kwargs['data']['deduce_data'])
+                self.tabular_column_names = ['Pasture', 'Forest plantation',  
+                                    'Soya beans', 'Coffee, green', 'Oil palm fruit',
+                                    'Cocoa beans', 'Natural rubber in primary forms']
+                self.tabular_cls_indices = torch.tensor([0,1,2,3,4,7,8]) 
 
 
     def __len__(self):
@@ -112,6 +107,7 @@ class DriverDataset(Dataset):
     
 
 
+
     def _get_static_commodity_expansion_rates(self, country): #TODO: Max year should be 2022, this is temporary
         
         country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
@@ -133,16 +129,6 @@ class DriverDataset(Dataset):
         return exp_rates
 
 
-
-
-    def old_get_static_commodity_expansion_rates(self, country): #TODO: Max year should be 2022, this is temporary
-        
-
-        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
-        values = country_data[self.FAOSTAT_classes].values
-        #np.random.shuffle(values[0]) #as a sanity check, random shuffle of the values 
-        
-        return torch.Tensor(values)
     
     def _get_goldman_commodity_rates(self, county_indices):
         """_summary_
@@ -189,6 +175,45 @@ class DriverDataset(Dataset):
 
         return torch.Tensor(values)
 
+    def _get_static_commodity_data(self, idx):
+
+        if not self.use_tabular:
+            return Tensor([0]) #Just return something so that the dataloader doesn't crash
+        
+        if self.tabular_processing == 'country_id':
+            #TODO: this should not require any dataset; just a one-hot encoding of countries
+            return torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data.country == self.img_labels.iloc[idx].country].index.values[0]])
+
+        assert self.tabular_processing == 'token', 'Only token processing implemented at the moment'
+        if self.tabular_dataset == 'goldman':
+ 
+            # This dataset is produced at a county-level, not country
+            county_indices = self.img_labels.goldman_index.iloc[idx]
+            county_indices = json.loads(county_indices)
+            if len(county_indices) == 0:
+                rates = np.array([np.nan, np.nan, np.nan, np.nan, np.nan], dtype='float32')
+            else:
+                rates = self.tabular_data.loc[county_indices[0], self.tabular_column_names].values
+                if len(rates.shape) == 2: #If the examples intersects with multiple counties, take the average
+                    rates = np.nanmean(rates, axis=0)
+        else:
+            country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
+            rates = country_data[self.tabular_column_names].values
+            
+        
+        #np.random.shuffle(rates[0]) #as a sanity check, random shuffle of the values 
+        # Create a tensor of size 12, fill with values at the corresponding indices
+        #TODO: learn a 'missing data' token instead
+        rates = np.nan_to_num(rates.astype('float32'), nan=0.0)
+        tabular_data = torch.zeros((12), dtype=torch.float)
+        tabular_data[self.tabular_cls_indices] = torch.Tensor(rates.squeeze())
+        tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
+        tabular_data = tabular_data.squeeze()
+
+        #tabular_data = add_noise(tabular_data, noise_level=0.05) #Optionally add noise
+        
+        return tabular_data
+        
 
     def __getitem__(self, idx):
 
@@ -206,8 +231,7 @@ class DriverDataset(Dataset):
         if self.target_transform:
             label = self.target_transform(label)    
         
-        #TODO: test if this works when forestloss=False (maybe returning None won't work with the default collate fn)
-        forestloss_data = None
+        forestloss_data = Tensor([0]) # In case it is not used, return something valid to avoid dataloader crashing
         #Load forestloss patch if applicable
         if self.use_forestloss:
             sampleid = str(self.img_labels.iloc[idx]['sampleid'])
@@ -218,18 +242,8 @@ class DriverDataset(Dataset):
                 #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
 
-        ### Adding tabular data - I can always add this even if they are not used - does not take a lot of time
-        country = self.img_labels.iloc[idx].country
-        if self.tabular_processing == 'country_id':
-            tabular_data = torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data['country'] == country].index.values[0]])
-        elif self.tabular_processing == 'goldman_token':
-            tabular_data = self._get_goldman_commodity_rates(self.img_labels.goldman_index.iloc[idx])
-        elif self.tabular_processing == 'deduce_token':
-            tabular_data = self._get_deduce_commodity_rates(country)
-        else:
-            tabular_data = self._get_static_commodity_expansion_rates(country)
-            #tabular_data = self.old_get_static_commodity_expansion_rates(country)
-        tabular_data = tabular_data.squeeze()
+    
+        tabular_data = self._get_static_commodity_data(idx)
         
         inputs  = [image_data, loc, tabular_data, forestloss_data]
 
@@ -237,3 +251,19 @@ class DriverDataset(Dataset):
     
 
 
+
+
+def add_noise(tensor, noise_level=0.01):
+    # Compute the range of the tensor
+    value_range = tensor.max() - tensor.min()
+    
+    # Generate random noise scaled by the range of the tensor and the desired noise level
+    noise = noise_level * value_range * torch.randn_like(tensor)
+    
+    # Create a mask for non-zero elements
+    mask = tensor != 0
+    
+    # Apply noise only to non-zero elements
+    tensor = tensor + noise * mask
+    
+    return tensor

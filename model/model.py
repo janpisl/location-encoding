@@ -92,10 +92,9 @@ def _get_feature_vector_size(config):
             feature_vector_dim += 1
         elif config['hyperparams']['tabular_encoder']['type'] == 'reports_raw':
             feature_vector_dim += 6
-        elif config['hyperparams']['tabular_encoder']['type'] == 'reports_token':
+        elif 'token' in config['hyperparams']['tabular_encoder']['type']:
             feature_vector_dim += embed_dim
-        elif config['hyperparams']['tabular_encoder']['type'] == 'goldman_token':
-            feature_vector_dim += embed_dim
+
 
     return feature_vector_dim
     
@@ -122,15 +121,11 @@ class MultiModalDriverClassifier(nn.Module):
         if self.use_location:
             self.loc_encoder = LocationEncoder(positional_embedding=kwargs['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **kwargs)
         
-
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
-            if self.tabular_processing == 'reports_token' or self.tabular_processing == 'deduce_token':
-                #self.tabular_encoder = nn.Linear(6, out_features=self.embedding_dim, bias = True)
+            if self.tabular_processing == 'token':
                 self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
-            elif self.tabular_processing == 'goldman_token':
-                self.tabular_encoder = nn.Linear(5, out_features=self.embedding_dim, bias = True)
 
     def forward(self, image_data, location, tabular_data, forestloss_patch=None):
         
@@ -145,7 +140,7 @@ class MultiModalDriverClassifier(nn.Module):
             features.append(loc_features)
 
         if self.use_tabular:
-            if 'token' in self.tabular_processing:
+            if self.tabular_processing == 'token':
                 tabular_data = self.tabular_encoder(tabular_data)
             elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
                 tabular_data = tabular_data.unsqueeze(1)

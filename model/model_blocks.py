@@ -85,7 +85,7 @@ class FullyConnectedClassifier(nn.Module):
                 token = [i for i in token]
                 for i in token:
                     processed_tokens.append(i)
-
+        
         tokens = torch.cat(processed_tokens, dim=1)
 
         return self.classifier(tokens)

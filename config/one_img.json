@@ -22,7 +22,6 @@
         "early_stopping_patience": [25],
 
         "embedding_dim" : [128],
-        
 
         "image_encoder": [
              

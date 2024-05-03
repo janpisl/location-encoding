@@ -64,11 +64,18 @@ class DriverDataset(Dataset):
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type'] #Should be 'country_id' or 'token'
+            try:
+                self.tabular_temporal_processing = kwargs['hyperparams']['tabular_encoder']['temporal_processing'] #Should be 'dynamic' or 'static'
+            except KeyError:
+                self.tabular_temporal_processing = 'static'
             self.tabular_dataset = kwargs['hyperparams']['tabular_encoder']['dataset'].lower()
             if self.tabular_dataset == 'faostat':
                 self.tabular_data = pd.read_csv(kwargs['data']['faostat_data']) 
-                self.tabular_column_names = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
-                self.tabular_cls_indices = torch.tensor([0, 4, 2, 7, 3, 8]) 
+                #self.tabular_column_names = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Natural rubber in primary forms']
+                #self.tabular_cls_indices = torch.tensor([0, 4, 2, 7, 3, 8]) 
+
+                self.tabular_column_names = ['Cattle', 'Soya beans', 'Cocoa beans', 'Coffee, green', 'Oil palm fruit', 'Natural rubber in primary forms']
+                self.tabular_cls_indices = torch.tensor([0, 2, 7, 3, 4, 8]) 
             elif self.tabular_dataset == 'goldman':
                 self.tabular_data = pd.read_csv(kwargs['data']['goldman_data'])
                 self.tabular_column_names = ['oil_palm_loss', 'soy_loss', 'cocoa_loss', 'pasture_loss', 'coffee_loss']
@@ -104,82 +111,60 @@ class DriverDataset(Dataset):
                 images.append(data)
             loaded_data = torch.stack(images, dim=0)
         return loaded_data
-    
 
 
-
-    def _get_static_commodity_expansion_rates(self, country): #TODO: Max year should be 2022, this is temporary
-        
-        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
-        values = country_data[self.FAOSTAT_classes].values
-        #np.random.shuffle(values[0]) #as a sanity check, random shuffle of the values 
-        exp_rates = torch.zeros((12), dtype=torch.float)
-        exp_rates[self.faostat_indices] = torch.Tensor(values.squeeze())
-        
-        return exp_rates
-    
-    def _get_deduce_commodity_rates(self, country):
-        
-        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
-        values = country_data[self.deduce_classes].values
-        #np.random.shuffle(values[0]) #as a sanity check, random shuffle of the values 
-        exp_rates = torch.zeros((12), dtype=torch.float)
-        exp_rates[self.deduce_indices] = torch.Tensor(values.squeeze())
-        exp_rates = torch.nan_to_num(exp_rates, nan=0.0)
-        return exp_rates
-
-
-    
-    def _get_goldman_commodity_rates(self, county_indices):
-        """_summary_
-
-        Args:
-            county_indices (list): 
-        """
-        
-        county_indices = json.loads(county_indices)
-        if len(county_indices) == 0:
-            rates = np.array([0,0,0,0,0]) #This is also temporary
-        else:
-            rates = self.goldman_data.loc[county_indices[0], self.goldman_cols].values
-
-            if len(rates.shape) == 2: #If the examples intersects with multiple counties, take the average
-                rates = np.nanmean(rates, axis=0)
-
-        #TEMPORARY - the real solution would be to learn a missing-data-token
-        rates = np.nan_to_num(rates.astype('float'))
-        
-        return torch.Tensor(rates)
-
-
-    def _get_dynamic_commodity_expansion_rates(self, country, min_year=2000, max_year=2020): #TODO: Max year should be 2022, this is temporary
-        assert False, 'for now, the values are precomputed per-country'
-
+    def _get_commodity_data(self, idx, forestloss_patch=None):
         #TODO: include also data quality flag - there are 5 possibilities (official, estimated, missing, imputed, value from int'l org)        
-
-        FAOSTAT_classes = ['Cattle', 'Palm oil', 'Soya beans', 'Cocoa beans', 'Coffee, green',
-       'Natural rubber in primary forms']
-
-        country_data = self.tabular_production_data.loc[self.tabular_production_data['country'] == country]
-        pdb.set_trace()
-        values = []
-
-        for _class in FAOSTAT_classes:
-            try:
-                production_at_the_start = country_data.loc[(country_data.Item == _class) & (country_data.Year == int(min_year)), 'Value' ].item()
-                production_at_the_end = country_data.loc[(country_data.Item == _class) & (country_data.Year == int(max_year)), 'Value' ].item()
-                expansion = production_at_the_end - production_at_the_start
-            except ValueError: #Signifies that one (or both) of the values are missing
-                expansion = 0
-            values.append(expansion)
-
-        return torch.Tensor(values)
-
-    def _get_static_commodity_data(self, idx):
 
         if not self.use_tabular:
             return Tensor([0]) #Just return something so that the dataloader doesn't crash
+
+        if self.tabular_temporal_processing == 'static':
+            rates = self._get_static_commodity_data(idx)
         
+        elif self.tabular_temporal_processing == 'dynamic':    
+            assert forestloss_patch is not None, 'forest loss data needed for dynamic commodity processing'
+            rates = self._get_dynamic_commodity_data(idx, forestloss_patch)
+        else:
+            raise ValueError('commodity data processing can be static or dynamic')
+
+        #np.random.shuffle(rates[0]) #as a sanity check, random shuffle of the values 
+        # Create a tensor of size 12, fill with values at the corresponding indices
+        #TODO: learn a 'missing data' token instead
+        rates = np.nan_to_num(rates.astype('float32'), nan=0.0)
+        tabular_data = torch.zeros((12), dtype=torch.float)
+        tabular_data[self.tabular_cls_indices] = torch.Tensor(rates.squeeze())
+        tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
+        tabular_data = tabular_data.squeeze()
+
+        #tabular_data = add_noise(tabular_data, noise_level=0.05) #Optionally add noise
+
+        return tabular_data
+
+
+    def _get_dynamic_commodity_data(self, idx, forestloss_patch): #TODO: Max year should be 2022, this is temporary
+
+        years = forestloss_patch[(forestloss_patch >= 2000) & (forestloss_patch <= 2020)]
+        min_year, max_year = years.min(), years.max()
+        
+        country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
+
+        rates = []
+        for _class in self.tabular_column_names:
+            try:
+                production_at_the_start = country_data.loc[(country_data.Item == _class) & (country_data.Year == int(min_year)), 'Value' ].item()
+                production_at_the_end = country_data.loc[(country_data.Item == _class) & (country_data.Year == int(max_year)), 'Value' ].item()
+                rate = production_at_the_end - production_at_the_start
+            except ValueError: #Signifies that one (or both) of the values are missing
+                rate = np.nan
+            
+            rates.append(rate)
+        
+        return np.array(rates)
+
+
+    def _get_static_commodity_data(self, idx):
+
         if self.tabular_processing == 'country_id':
             #TODO: this should not require any dataset; just a one-hot encoding of countries
             return torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data.country == self.img_labels.iloc[idx].country].index.values[0]])
@@ -200,19 +185,7 @@ class DriverDataset(Dataset):
             country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
             rates = country_data[self.tabular_column_names].values
             
-        
-        #np.random.shuffle(rates[0]) #as a sanity check, random shuffle of the values 
-        # Create a tensor of size 12, fill with values at the corresponding indices
-        #TODO: learn a 'missing data' token instead
-        rates = np.nan_to_num(rates.astype('float32'), nan=0.0)
-        tabular_data = torch.zeros((12), dtype=torch.float)
-        tabular_data[self.tabular_cls_indices] = torch.Tensor(rates.squeeze())
-        tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
-        tabular_data = tabular_data.squeeze()
-
-        #tabular_data = add_noise(tabular_data, noise_level=0.05) #Optionally add noise
-        
-        return tabular_data
+        return rates
         
 
     def __getitem__(self, idx):
@@ -242,8 +215,7 @@ class DriverDataset(Dataset):
                 #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
 
-    
-        tabular_data = self._get_static_commodity_data(idx)
+        tabular_data = self._get_commodity_data(idx, forestloss_data)
         
         inputs  = [image_data, loc, tabular_data, forestloss_data]
 

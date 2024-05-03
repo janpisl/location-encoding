@@ -261,13 +261,13 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)'''
+        main(config)
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         try:
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
@@ -279,8 +279,8 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_2_5.txt", "a") as sink:
-                sink.write(text)
+            with open("logs_3_5.txt", "a") as sink:
+                sink.write(text)'''
 
 
 

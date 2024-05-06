@@ -145,7 +145,12 @@ class DriverDataset(Dataset):
     def _get_dynamic_commodity_data(self, idx, forestloss_patch): #TODO: Max year should be 2022, this is temporary
 
         years = forestloss_patch[(forestloss_patch >= 2000) & (forestloss_patch <= 2020)]
-        min_year, max_year = years.min(), years.max()
+        try:
+            min_year, max_year = years.min(), years.max()
+        except:
+            min_year, max_year = 2000, 2020
+        #TODO: consider using not the absolute min,max, but percentiles
+        #min_year, max_year = np.percentile(years.flatten(), 10), np.percentile(years.flatten(), 90)
         
         country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
 
@@ -209,19 +214,18 @@ class DriverDataset(Dataset):
         if self.use_forestloss:
             sampleid = str(self.img_labels.iloc[idx]['sampleid'])
             path = os.path.join(self.forestloss_dir, f'{sampleid}.tif')
-            with rasterio.open(path) as source:
-                forestloss_data = Tensor(source.read())
+            with rasterio.open(path) as src:
+                forestloss_data = Tensor(src.read())
+                forestloss_original  = forestloss_data.detach().clone() #The transform modifies the Tensor so need a copy for min,max range
                 #TODO: find bug - forestloss_data should be just integer numbers but they are not
                 #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
 
-        tabular_data = self._get_commodity_data(idx, forestloss_data)
-        
+        #I need the forestloss data pre-normalization to get the minimum and maximum forest loss years
+        tabular_data = self._get_commodity_data(idx, forestloss_original)
         inputs  = [image_data, loc, tabular_data, forestloss_data]
 
         return inputs, label
-    
-
 
 
 

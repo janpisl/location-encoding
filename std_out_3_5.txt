@@ -776,3 +776,88 @@ wandb:             val [1]
 wandb: ⭐️ View project at https://wandb.ai/janpisl/project_2
 wandb: 🚀 View run at https://wandb.ai/janpisl/project_2/runs/uqk3w4nh
 No improvement for 15 epochs. Early stopping at epoch 90
+wandb: Waiting for W&B process to finish... (success).
+wandb: 
+wandb: Run history:
+wandb:                cocoa train f1-score ▁▅▆▇▇▇▇█████████████████████████████████
+wandb:                  cocoa val f1-score ▆▆█▆▁███████████████████████████████████
+wandb:               coffee train f1-score ▁▃▆▆▇▇▇▇▇▇▇▇▇███████████████████████████
+wandb:                 coffee val f1-score ▁▁█▆██▅▆▇▆▆▅▅▇▅▆▇▅▆▅▆▅▇█▆▇█▅█▆▆▆▇█▅▅▆▇▅▆
+wandb:    forest plantation train f1-score ▁▅▇▇▇▇▇▇▇▇▇█████████████████████████████
+wandb:      forest plantation val f1-score ▁▇█▇▇▇█▇▇▇▇████▇▇▇█▇▇█▇▇▇██▇▇█▇▇▇██▇██▇█
+wandb:      forest regrowth train f1-score ▁▃▄▆▆▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇█▇▇▇███████████████
+wandb:        forest regrowth val f1-score ▃▄▆▁▂▅█▇▄▇▃▅▅▅▅▇▅▄▃▂▃▄▄▆▅▄▇▄▇▂█▃▅▅▇▆▁▂▅▄
+wandb:               mining train f1-score ▁▃▄▄▅▆▆▇▇▇▇▇▇▇▇▇▇▇█▇█▇██████████████████
+wandb:                 mining val f1-score ▂▂▁▂▃▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇█▇▇▇█
+wandb:                other train f1-score ▁▂▃▄▅▇▇▇▇▇▇▇▇▇█▇▇▇▇█▇███████████████████
+wandb:                  other val f1-score ▁▃▂▃▅▄▅▇▅▅▄▅▇▅▅█▅▅▅▅▅▅▅▅█▅███▇██████▅█▇▇
+wandb:             palm oil train f1-score ▁▂▂▃▄▇▇▇▇▇▇▇▇▇▇▇▇███▇▇▇▇█▇█▇██▇█████████
+wandb:               palm oil val f1-score ▃▁▁▄▄▇▄▆▇▆█▇▆▆▇▆█▇▇▇▆▇▆▆▆▆▆▆▆▆▇▇▇▆▆█▇▆▇▆
+wandb:              pasture train f1-score ▁▃▅▆▆▆▇▇▇▇▇▇▇▇▇█████████████████████████
+wandb:                pasture val f1-score ▁▅▆▇▆█▇▇▇▇▇▇█▇▇▇▇██▇▇▇▇▇█▆█▇▇█▇▇▇█▇▇████
+wandb:               rubber train f1-score ▁▃▄▄▅▅▅▅▆▆▆▆▆▆▆▇▆▆▇▇▇▇▇▇▇▇█▇▇█▇▇████████
+wandb:                 rubber val f1-score ▆▆▅▆▆▆▆▅▆▆▁▆▇▆█▆▆▇▆▆▆▆▆▆▆▇▆▆▆▆▆▆█▇█▅▇▇▆▆
+wandb: shifting agriculture train f1-score ▁▅▆▇▆▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇█████▇██▇▇███
+wandb:   shifting agriculture val f1-score ▆▇▇▆▃▇▄▅▇▇▇▆▇▇▇▆▇▇▇▂▇▇▆▇▇▆▆▆▇▇▇▁▃▁▇▇▇▆▆█
+wandb:                  soy train f1-score ▁▃▆▇▇███████████████████████████████████
+wandb:                    soy val f1-score ▁▆▆▇▇█▇██████████████████▄██████████████
+wandb:                      train accuracy ▁▃▄▅▆▇▇▇▇▇▇▇▇▇▇▇▇▇██▇███████████████████
+wandb:                train macro f1-score ▁▃▅▆▆▇▇▇▇▇▇▇▇▇▇▇▇▇██████████████████████
+wandb:                          train-loss █▆▆▄▅▄▅▄▄▄▄▄▂▆▂▄▄▂▃▃▄▅▄▄▁▇▁▂▃▃▃▂▄▄▃▅▃▃▃▃
+wandb:                urban train f1-score ▁▄▅▅▅▆▆▆▆▆▅▆▆▆▆▆▇▇▇▇▇▇▇▇▇▇█▇▇▇▇█████████
+wandb:                  urban val f1-score ▄▄▄▄▄▅▅▅▅▄▆▅▆▅▂▅▅▁▅▅▅▅▅▄▆▆▆▅▆█▆▇▅▆▅▇▇▇▆█
+wandb:                        val accuracy ▁▄▄▅▄▇▆▇▇▇▆▇█▇▇█▇▇▇▇▇▇▇▇█▆█████▇████▇███
+wandb:                  val macro f1-score ▁▄▅▆▆▇▇▇▇▇▆▇▇▇▇█▇▇▇▇▇▇▇▇█▇█▇███▇██▇█▇███
+wandb:                            val-loss █▇▅▅▅▃▃▂▂▃▃▂▂▂▂▂▂▃▂▂▂▂▂▂▂▂▂▂▁▁▁▂▁▁▁▁▂▂▁▂
+wandb: 
+wandb: Run summary:
+wandb:                cocoa train f1-score 0.95758
+wandb:                  cocoa val f1-score 0.91049
+wandb:               coffee train f1-score 0.77025
+wandb:                 coffee val f1-score 0.22517
+wandb:    forest plantation train f1-score 0.59729
+wandb:      forest plantation val f1-score 0.51632
+wandb:      forest regrowth train f1-score 0.4018
+wandb:        forest regrowth val f1-score 0.25725
+wandb:               mining train f1-score 0.64686
+wandb:                 mining val f1-score 0.54942
+wandb:                other train f1-score 0.58955
+wandb:                  other val f1-score 0.50342
+wandb:             palm oil train f1-score 0.56115
+wandb:               palm oil val f1-score 0.45029
+wandb:              pasture train f1-score 0.67686
+wandb:                pasture val f1-score 0.68028
+wandb:               rubber train f1-score 0.80322
+wandb:                 rubber val f1-score 0.75
+wandb: shifting agriculture train f1-score 0.95189
+wandb:   shifting agriculture val f1-score 0.97967
+wandb:                  soy train f1-score 0.67133
+wandb:                    soy val f1-score 0.83735
+wandb:                      train accuracy 0.66617
+wandb:                train macro f1-score 0.67535
+wandb:                          train-loss 1.27732
+wandb:                urban train f1-score 0.47646
+wandb:                  urban val f1-score 0.31861
+wandb:                        val accuracy 0.63717
+wandb:                  val macro f1-score 0.58152
+wandb:                            val-loss 1.06757
+wandb: 
+wandb: 🚀 View run 
+wandb:             False img; yes loc;  token deduce tabular; 
+wandb:             train [0, 2, 3]
+wandb:             val [1] at: https://wandb.ai/janpisl/project_2/runs/uqk3w4nh
+wandb: ️⚡ View job at https://wandb.ai/janpisl/project_2/jobs/QXJ0aWZhY3RDb2xsZWN0aW9uOjEzOTQ4NDU0Nw==/version_details/v287
+wandb: Synced 7 W&B file(s), 116 media file(s), 0 artifact file(s) and 1 other file(s)
+wandb: Find logs at: ./wandb/run-20240503_153650-uqk3w4nh/logs
+wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: wandb version 0.16.6 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.15.12
+wandb: Run data is saved locally in /home/jan/Documents/EPFL/project_2/wandb/run-20240503_155319-0gfe8fdv
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run 
+wandb:             False img; yes loc;  token deduce tabular; 
+wandb:             train [0, 1, 3]
+wandb:             val [2]
+wandb: ⭐️ View project at https://wandb.ai/janpisl/project_2
+wandb: 🚀 View run at https://wandb.ai/janpisl/project_2/runs/0gfe8fdv
+No improvement for 15 epochs. Early stopping at epoch 58

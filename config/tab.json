@@ -5,9 +5,9 @@
         "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v4/labels_55k.csv",
         "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/SR_four_images",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/BUG_dataset_v4_nonbinarized",
-        "faostat_data": "/home/jan/Documents/EPFL/project_2/data/tmp/faostat_reports.csv",
-        "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tmp/deduce_tabular.csv",
-        "goldman_data": "/home/jan/Documents/EPFL/project_2/data/tmp/goldman.csv",
+        "faostat_data": "/home/jan/Documents/EPFL/project_2/data/tabular/faostat_reports_v2.csv",
+        "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_tabular.csv",
+        "goldman_data": "/home/jan/Documents/EPFL/project_2/data/tabular/goldman.csv",
         "output_folder":  "models_trained/"
     },
     "num_workers" : 32,

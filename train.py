@@ -172,7 +172,7 @@ def initialize_wandb(config, model, train_dl, val_dl):
         tab_enc_name = "no"
 
     try:
-        name = f"""
+        name = f"""dynamic, 10-90 perc;
             {config['hyperparams']['image_encoder']['use']} img; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
             train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""

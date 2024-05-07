@@ -115,13 +115,11 @@ class DriverDataset(Dataset):
 
     def _get_commodity_data(self, idx, forestloss_patch=None):
         #TODO: include also data quality flag - there are 5 possibilities (official, estimated, missing, imputed, value from int'l org)        
-
+        
         if not self.use_tabular:
             return Tensor([0]) #Just return something so that the dataloader doesn't crash
-
         if self.tabular_temporal_processing == 'static':
             rates = self._get_static_commodity_data(idx)
-        
         elif self.tabular_temporal_processing == 'dynamic':    
             assert forestloss_patch is not None, 'forest loss data needed for dynamic commodity processing'
             rates = self._get_dynamic_commodity_data(idx, forestloss_patch)
@@ -146,14 +144,13 @@ class DriverDataset(Dataset):
 
         years = forestloss_patch[(forestloss_patch >= 2000) & (forestloss_patch <= 2020)]
         try:
-            min_year, max_year = years.min(), years.max()
+            #min_year, max_year = years.min(), years.max()
+            min_year, max_year = np.percentile(years.flatten(), 10), np.percentile(years.flatten(), 90)
+            min_year = max(min_year - 1, 2000) #this is because I want the expansion rates with respect to before the deforestation event
         except:
             min_year, max_year = 2000, 2020
-        #TODO: consider using not the absolute min,max, but percentiles
-        #min_year, max_year = np.percentile(years.flatten(), 10), np.percentile(years.flatten(), 90)
-        
+       
         country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
-
         rates = []
         for _class in self.tabular_column_names:
             try:
@@ -169,7 +166,7 @@ class DriverDataset(Dataset):
 
 
     def _get_static_commodity_data(self, idx):
-
+        
         if self.tabular_processing == 'country_id':
             #TODO: this should not require any dataset; just a one-hot encoding of countries
             return torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data.country == self.img_labels.iloc[idx].country].index.values[0]])
@@ -216,12 +213,11 @@ class DriverDataset(Dataset):
             path = os.path.join(self.forestloss_dir, f'{sampleid}.tif')
             with rasterio.open(path) as src:
                 forestloss_data = Tensor(src.read())
-                forestloss_original  = forestloss_data.detach().clone() #The transform modifies the Tensor so need a copy for min,max range
+                forestloss_original  = forestloss_data.detach().clone() #I need the forestloss data pre-transform to get the minimum and maximum forest loss years
                 #TODO: find bug - forestloss_data should be just integer numbers but they are not
                 #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
-
-        #I need the forestloss data pre-normalization to get the minimum and maximum forest loss years
+        
         tabular_data = self._get_commodity_data(idx, forestloss_original)
         inputs  = [image_data, loc, tabular_data, forestloss_data]
 

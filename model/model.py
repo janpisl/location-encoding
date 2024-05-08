@@ -126,6 +126,8 @@ class MultiModalDriverClassifier(nn.Module):
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             if self.tabular_processing == 'token':
                 self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
+                self.missing_tab_value_token = nn.Parameter(torch.zeros(1))
+                torch.nn.init.normal_(self.missing_tab_value_token)
 
     def forward(self, image_data, location, tabular_data, forestloss_patch=None):
         
@@ -141,6 +143,7 @@ class MultiModalDriverClassifier(nn.Module):
 
         if self.use_tabular:
             if self.tabular_processing == 'token':
+                tabular_data[torch.isnan(tabular_data)] = self.missing_tab_value_token
                 tabular_data = self.tabular_encoder(tabular_data)
             elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
                 tabular_data = tabular_data.unsqueeze(1)

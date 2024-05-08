@@ -74,10 +74,12 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
         
         preds_batches.append(preds)
         targets_batches.append(labels_batch)
+        
+        wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
 
     targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
     preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
-
+    
     #Compute metrics over the training set and log to wandb
     _ = compute_and_log_metrics(targets, preds, 'train', config['wandb']['log_to_wandb'])
 

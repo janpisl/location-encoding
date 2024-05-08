@@ -28,6 +28,8 @@ LABEL_MAPPING = {
     'other': 11 
 }
 
+FOREST_LOSS_YEAR_RANGE = 2000, 2020
+
 
 
 class DriverDataset(Dataset):
@@ -86,6 +88,8 @@ class DriverDataset(Dataset):
                                     'Soya beans', 'Coffee, green', 'Oil palm fruit',
                                     'Cocoa beans', 'Natural rubber in primary forms']
                 self.tabular_cls_indices = torch.tensor([0,1,2,3,4,7,8]) 
+            
+            
 
 
     def __len__(self):
@@ -129,10 +133,10 @@ class DriverDataset(Dataset):
         #np.random.shuffle(rates[0]) #as a sanity check, random shuffle of the values 
         # Create a tensor of size 12, fill with values at the corresponding indices
         #TODO: learn a 'missing data' token instead
-        rates = np.nan_to_num(rates.astype('float32'), nan=0.0)
-        tabular_data = torch.zeros((12), dtype=torch.float)
+        #rates = np.nan_to_num(rates.astype('float32'), nan=0.0)
+        tabular_data = torch.full((12,), fill_value=float('nan')) 
         tabular_data[self.tabular_cls_indices] = torch.Tensor(rates.squeeze())
-        tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
+        #tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
         tabular_data = tabular_data.squeeze()
 
         #tabular_data = add_noise(tabular_data, noise_level=0.05) #Optionally add noise
@@ -142,13 +146,13 @@ class DriverDataset(Dataset):
 
     def _get_dynamic_commodity_data(self, idx, forestloss_patch): #TODO: Max year should be 2022, this is temporary
 
-        years = forestloss_patch[(forestloss_patch >= 2000) & (forestloss_patch <= 2020)]
+        years = forestloss_patch[(forestloss_patch >= FOREST_LOSS_YEAR_RANGE[0]) & (forestloss_patch <= FOREST_LOSS_YEAR_RANGE[1])]
         try:
-            #min_year, max_year = years.min(), years.max()
-            min_year, max_year = np.percentile(years.flatten(), 10), np.percentile(years.flatten(), 90)
-            min_year = max(min_year - 1, 2000) #this is because I want the expansion rates with respect to before the deforestation event
+            min_year, max_year = years.min(), years.max()
+            #min_year, max_year = np.percentile(years.flatten(), 10), np.percentile(years.flatten(), 90)
+            min_year = max(min_year - 1, FOREST_LOSS_YEAR_RANGE[0]) #this is because I want the expansion rates with respect to before the deforestation event
         except:
-            min_year, max_year = 2000, 2020
+            min_year, max_year = FOREST_LOSS_YEAR_RANGE
        
         country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
         rates = []

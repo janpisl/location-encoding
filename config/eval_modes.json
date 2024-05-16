@@ -3,9 +3,11 @@
 
     "data": {
         "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v4/labels_55k.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/four_images",
-        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v4_nonbinarized",
-        "tabular_production_data": "/home/jan/Documents/EPFL/project_2/data/tmp/faostat_reports.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/SR_four_images",
+        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v4",
+        "faostat_data": "/home/jan/Documents/EPFL/project_2/data/tabular/faostat_2000_2020_dynamic.csv",
+        "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
+        "goldman_data": "/home/jan/Documents/EPFL/project_2/data/tabular/goldman.csv",
         "output_folder":  "models_trained/"
     },
     "num_workers" : 32,
@@ -19,51 +21,75 @@
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [25],
+        "early_stopping_patience": [30],
 
         "embedding_dim" : [128],
+        "train_examples_per_class" : [5000],
         
 
         "image_encoder": [
-             
+
             {
                 "use" : "False",
                 "type" : "cnn",
                 "backbone": "resnet18",
-                "pretrained_backbone" : "True"
-    
-            }         
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze" : "False"
+
+            },
+            {
+                "use" : "True",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze" : "False"
+
+            }
         ],
 
         "loc_encoder": [
 
             {
+                "use" : "False",
+                "positional_embedding": "cartesian3d"
+            },
+
+            {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
-            }        
+            }
+
         ],   
 
         "tabular_encoder": [
 
             {
+                "use" : "False",
+                "dataset" : "deduce",
+                "type" : "token",
+                "temporal_processing" : "dynamic"
+
+            },
+            {
                 "use" : "True",
-                "type" : "reports_token"
-            }
+                "dataset" : "deduce",
+                "type" : "token",
+                "temporal_processing" : "dynamic"
+
+            }            
+
         ],
 
         
         "classifier": [
 
             {
-                "type" : "fc",
-                "transformer_layers": 3,
-                "attention_heads":8
-            },
-            {
                 "type" : "transformer",
                 "transformer_layers": 3,
                 "attention_heads":8
-            }            
+            }             
         ],
 
         "folds_to_split" : [
@@ -130,6 +156,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "no image 12/4"
+        "group": "16/5 single-bi-trimodal evaluation"
     }
 }

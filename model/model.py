@@ -127,7 +127,7 @@ class MultiModalDriverClassifier(nn.Module):
             if self.tabular_processing == 'token':
                 self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
                 self.missing_tab_value_token = nn.Parameter(torch.zeros(1))
-                torch.nn.init.normal_(self.missing_tab_value_token)
+                torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
 
     def forward(self, image_data, location, tabular_data, forestloss_patch=None):
         

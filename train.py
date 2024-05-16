@@ -75,7 +75,8 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
         preds_batches.append(preds)
         targets_batches.append(labels_batch)
         
-        wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
+        if config['wandb']['log_to_wandb']:
+            wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
 
     targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
     preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
@@ -174,7 +175,7 @@ def initialize_wandb(config, model, train_dl, val_dl):
         tab_enc_name = "no"
 
     try:
-        name = f"""dynamic, 10-90 perc;
+        name = f"""dynamic 10/90;
             {config['hyperparams']['image_encoder']['use']} img; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
             train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""

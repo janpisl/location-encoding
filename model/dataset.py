@@ -122,39 +122,80 @@ class DriverDataset(Dataset):
         
         if not self.use_tabular:
             return Tensor([0]) #Just return something so that the dataloader doesn't crash
-        if self.tabular_temporal_processing == 'static':
-            rates = self._get_static_commodity_data(idx)
-        elif self.tabular_temporal_processing == 'dynamic':    
-            assert forestloss_patch is not None, 'forest loss data needed for dynamic commodity processing'
-            rates = self._get_dynamic_commodity_data(idx, forestloss_patch)
-        else:
-            raise ValueError('commodity data processing can be static or dynamic')
+        
+        if self.tabular_processing == 'country_id':
+            #TODO: this should not require any dataset; just a one-hot encoding of countries
+            return torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data.country == self.img_labels.iloc[idx].country].index.values[0]])
 
-        #np.random.shuffle(rates[0]) #as a sanity check, random shuffle of the values 
+        if self.tabular_temporal_processing == 'static':
+            min_year, max_year = FOREST_LOSS_YEAR_RANGE
+        elif self.tabular_temporal_processing == 'dynamic':
+            min_year, max_year = self._get_range(forestloss_patch, 10, 90)
+        
+        # Using the tabular dataset, grab rows corresponding to the country of given example
+        country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
+
+        if self.tabular_dataset == 'deduce':
+            # Grab rows containing data for target time period
+            data_in_period = country_data.loc[(country_data['Year'] >= min_year) & (country_data['Year'] <= max_year) ]
+            rates = []
+            # For each class, sum the deforestation attributed to that class over the target period
+            for _cls in self.tabular_column_names:
+                target_column = 'Commodity group' if _cls in ['Pasture', 'Forest plantation'] else 'Commodity'
+                values_per_year = data_in_period.loc[data_in_period[target_column] == _cls]['commodity attributed deforestation']
+                target_value = values_per_year.sum(skipna=False, min_count=1)/values_per_year.count()
+                rates.append(target_value)
+            rates = np.array(rates)
+        elif self.tabular_dataset == 'faostat':
+            rates = self._get_faostat_commodity_expansion(country_data, min_year, max_year)
+        elif self.tabular_dataset == 'goldman':
+            raise NotImplementedError("Goldman not yet implemented")
+
+            # This dataset is produced at a county-level, not country
+            '''county_indices = self.img_labels.goldman_index.iloc[idx]
+            county_indices = json.loads(county_indices)
+            if len(county_indices) == 0:
+                rates = np.array([np.nan, np.nan, np.nan, np.nan, np.nan], dtype='float32')
+            else:
+                rates = self.tabular_data.loc[county_indices[0], self.tabular_column_names].values
+                if len(rates.shape) == 2: #If the examples intersects with multiple counties, take the average
+                    rates = np.nanmean(rates, axis=0)'''
+
+
         # Create a tensor of size 12, fill with values at the corresponding indices
-        #TODO: learn a 'missing data' token instead
-        #rates = np.nan_to_num(rates.astype('float32'), nan=0.0)
         tabular_data = torch.full((12,), fill_value=float('nan')) 
         tabular_data[self.tabular_cls_indices] = torch.Tensor(rates.squeeze())
         #tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
         tabular_data = tabular_data.squeeze()
 
-        #tabular_data = add_noise(tabular_data, noise_level=0.05) #Optionally add noise
-
         return tabular_data
 
 
-    def _get_dynamic_commodity_data(self, idx, forestloss_patch): #TODO: Max year should be 2022, this is temporary
+    def _get_range(self, array, min_perc=0, max_perc=100):
+        """Find minimum and maximum values from input array that are
+        within the FOREST_LOSS_YEAR_RANGE; if min_perc and/or max_perc 
+        are specified, return the corresponding percentiles 
 
-        years = forestloss_patch[(forestloss_patch >= FOREST_LOSS_YEAR_RANGE[0]) & (forestloss_patch <= FOREST_LOSS_YEAR_RANGE[1])]
+        Args:
+            array (np.array): input array (forestloss patch)
+            min_perc (int, optional): minimum percentile to be used. Defaults to 0.
+            max_perc (int, optional): maximum percentile. Defaults to 100.
+
+        Returns:
+            tuple(int, int): the minimum and maximum value
+        """
+
+        years = array[(array >= FOREST_LOSS_YEAR_RANGE[0]) & (array <= FOREST_LOSS_YEAR_RANGE[1])]
         try:
-            min_year, max_year = years.min(), years.max()
-            #min_year, max_year = np.percentile(years.flatten(), 10), np.percentile(years.flatten(), 90)
-            min_year = max(min_year - 1, FOREST_LOSS_YEAR_RANGE[0]) #this is because I want the expansion rates with respect to before the deforestation event
+            min_year, max_year = np.percentile(years.flatten(), min_perc), np.percentile(years.flatten(), max_perc)
         except:
-            min_year, max_year = FOREST_LOSS_YEAR_RANGE
-       
-        country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
+            min_year, max_year = FOREST_LOSS_YEAR_RANGE #This is just in case the array only contains 0s, which should not happen but does happen for some corner cases
+
+        return min_year, max_year
+
+
+    def _get_faostat_commodity_expansion(self, country_data, min_year, max_year):
+
         rates = []
         for _class in self.tabular_column_names:
             try:
@@ -169,30 +210,6 @@ class DriverDataset(Dataset):
         return np.array(rates)
 
 
-    def _get_static_commodity_data(self, idx):
-        
-        if self.tabular_processing == 'country_id':
-            #TODO: this should not require any dataset; just a one-hot encoding of countries
-            return torch.Tensor([self.tabular_production_data.loc[self.tabular_production_data.country == self.img_labels.iloc[idx].country].index.values[0]])
-
-        assert self.tabular_processing == 'token', 'Only token processing implemented at the moment'
-        if self.tabular_dataset == 'goldman':
- 
-            # This dataset is produced at a county-level, not country
-            county_indices = self.img_labels.goldman_index.iloc[idx]
-            county_indices = json.loads(county_indices)
-            if len(county_indices) == 0:
-                rates = np.array([np.nan, np.nan, np.nan, np.nan, np.nan], dtype='float32')
-            else:
-                rates = self.tabular_data.loc[county_indices[0], self.tabular_column_names].values
-                if len(rates.shape) == 2: #If the examples intersects with multiple counties, take the average
-                    rates = np.nanmean(rates, axis=0)
-        else:
-            country_data = self.tabular_data.loc[self.tabular_data['country'] == self.img_labels.iloc[idx].country]
-            rates = country_data[self.tabular_column_names].values
-            
-        return rates
-        
 
     def __getitem__(self, idx):
 
@@ -218,28 +235,9 @@ class DriverDataset(Dataset):
             with rasterio.open(path) as src:
                 forestloss_data = Tensor(src.read())
                 forestloss_original  = forestloss_data.detach().clone() #I need the forestloss data pre-transform to get the minimum and maximum forest loss years
-                #TODO: find bug - forestloss_data should be just integer numbers but they are not
-                #patch_min_year = forestloss_data[forestloss_data >= self.min_year].min()
                 forestloss_data = self.forestloss_transform(forestloss_data)
         
         tabular_data = self._get_commodity_data(idx, forestloss_original)
         inputs  = [image_data, loc, tabular_data, forestloss_data]
 
         return inputs, label
-
-
-
-def add_noise(tensor, noise_level=0.01):
-    # Compute the range of the tensor
-    value_range = tensor.max() - tensor.min()
-    
-    # Generate random noise scaled by the range of the tensor and the desired noise level
-    noise = noise_level * value_range * torch.randn_like(tensor)
-    
-    # Create a mask for non-zero elements
-    mask = tensor != 0
-    
-    # Apply noise only to non-zero elements
-    tensor = tensor + noise * mask
-    
-    return tensor

@@ -113,6 +113,24 @@ def get_forestloss_transform(config):
 
 
 
+def sample_rows(df, column, n_rows):
+    """
+    Return a DataFrame which contains n_rows for each unique value in 'column', 
+    randomly sampled. If there are less rows than n_rows for some value in 'column', 
+    return all rows that have that value.
+
+    Arguments:
+        df: pandas.DataFrame
+        column: str
+        n_rows: int
+        
+    Returns:
+        pandas.DataFrame
+    """
+    return df.groupby(column).apply(lambda x: x.sample(min(len(x), n_rows))).reset_index(drop=True)
+
+
+
 def fetch_dataloader(types, config):
     """
     Fetches the DataLoader object for each type in types from data_dir.
@@ -172,10 +190,17 @@ def fetch_dataloader(types, config):
                     folds_to_split_mapping = json.loads(src.read())
                 
             annotation['split'] = annotation[split_column].map(folds_to_split_mapping) 
-
             if split == 'train':
                 _transform = train_transform
                 _shuffle = True
+                try:
+                    # Select only a subset of the training data - in such a way that the number of examples per class is uniform
+                    examples_per_class = config['hyperparams']['train_examples_per_class']
+                    annotation = sample_rows(annotation.loc[annotation.split == split].reset_index(drop=True), 'driver', examples_per_class)
+                except KeyError:
+                    pass
+
+
             elif split == 'val' or split == 'test':
                 _transform = eval_transform
                 _shuffle = False   

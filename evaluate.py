@@ -58,8 +58,9 @@ def evaluate(model, loss_fn, dataloader, device, config, return_preds_and_target
 
 def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=None):
 
-    conf_matrix_file_path = write_confusion_matrix(targets, preds, labels=CLASS_INDICES,target_names=CLASS_NAMES)
-    conf_matrix_image = plt.imread(conf_matrix_file_path)
+    #Not logging the confusion matrix atm since I don't use it and it's a lot of data
+    #conf_matrix_file_path = write_confusion_matrix(targets, preds, labels=CLASS_INDICES,target_names=CLASS_NAMES)
+    #conf_matrix_image = plt.imread(conf_matrix_file_path)
 
     metrics = classification_report(targets, preds, output_dict=True,labels=CLASS_INDICES,target_names=CLASS_NAMES,zero_division=0)
     log_dict = {}
@@ -72,7 +73,10 @@ def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=N
         log_dict[f'{dataset_name} accuracy'] = metrics['accuracy']
     
     log_dict[f'{dataset_name} macro f1-score'] = metrics['macro avg']['f1-score']
-    log_dict[f'{dataset_name} conf matrix'] = wandb.Image(conf_matrix_image)
+    
+    #Not logging the confusion matrix atm since I don't use it and it's a lot of data
+    #log_dict[f'{dataset_name} conf matrix'] = wandb.Image(conf_matrix_image)
+    
     if losses:
         metrics['loss'] = sum(losses)/len(losses)
         log_dict[f'{dataset_name}-loss'] = metrics['loss']

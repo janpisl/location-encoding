@@ -76,7 +76,10 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
         targets_batches.append(labels_batch)
         
         if config['wandb']['log_to_wandb']:
-            wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
+            try:
+                wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
+            except AttributeError:
+                pass
 
     targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
     preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()

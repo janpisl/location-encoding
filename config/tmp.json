@@ -24,6 +24,7 @@
         "early_stopping_patience": [30],
 
         "embedding_dim" : [128],
+        "train_examples_per_class" : [50, 20],
         
 
         "image_encoder": [
@@ -104,6 +105,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "13/5 deduce processing v2"
+        "group": "16/5 low data regime"
     }
 }

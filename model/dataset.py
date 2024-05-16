@@ -44,9 +44,6 @@ class DriverDataset(Dataset):
         self.img_labels = annotations_file if isinstance(annotations_file, pd.DataFrame) else pd.read_csv(annotations_file)
         self.img_labels['geometry'] = gpd.GeoSeries.from_wkt(self.img_labels['geometry'])
 
-        
-        #self.min_year = 2000
-
         #Randomly swapping filenames 
         #print(" ----  Randomizing labels! ---- ")
         #self.img_labels['driver'] = self.img_labels[['driver']].sample(frac=1, random_state=1).reset_index(drop=True)

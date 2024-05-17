@@ -125,7 +125,7 @@ class MultiModalDriverClassifier(nn.Module):
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             if self.tabular_processing == 'token':
-                self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
+                self.tabular_encoder = nn.Linear(12, out_features=12, bias = True)
                 try:
                     learn_missing_value = kwargs['hyperparams']['tabular_encoder']['learn_missing_value']
                 except KeyError:
@@ -148,16 +148,12 @@ class MultiModalDriverClassifier(nn.Module):
             loc_features = self.loc_encoder(location)
             features.append(loc_features)
 
-        if self.use_tabular:
-            if self.tabular_processing == 'token':
-                tabular_data[torch.isnan(tabular_data)] = self.missing_tab_value_token
-                tabular_data = self.tabular_encoder(tabular_data)
-            elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
-                tabular_data = tabular_data.unsqueeze(1)
-                tabular_data = tabular_data.repeat(1, self.embedding_dim)
-            
-            features.append(tabular_data)
         
         predictions = self.classifier(features)
+
+        if self.use_tabular:
+            tabular_data[torch.isnan(tabular_data)] = self.missing_tab_value_token
+            tabular_data = self.tabular_encoder(tabular_data)
+            predictions = predictions * tabular_data
 
         return predictions

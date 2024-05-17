@@ -81,6 +81,8 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
             except AttributeError:
                 pass
 
+
+
     targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
     preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
     

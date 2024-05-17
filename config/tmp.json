@@ -24,7 +24,7 @@
         "early_stopping_patience": [30],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [5000],
+        "train_examples_per_class" : [500],
         
 
         "image_encoder": [
@@ -105,6 +105,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "16/5 low data regime"
+        "group": "16/5 tabular late fusion"
     }
 }

@@ -21,10 +21,10 @@
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [30],
+        "early_stopping_patience": [15],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [5000],
+        "train_examples_per_class" : [500],
         
 
         "image_encoder": [
@@ -43,7 +43,7 @@
         "loc_encoder": [
 
             {
-                "use" : "False",
+                "use" : "True",
                 "positional_embedding": "cartesian3d"
             }
 
@@ -52,7 +52,7 @@
         "tabular_encoder": [
 
             {
-                "use" : "True",
+                "use" : "False",
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic"
@@ -76,8 +76,42 @@
 
         "folds_to_split" : [
 
+
             {
-                "column" : "split",
+                "column" : "split_5",
+                "mapping"  : {
+                    "0" : "val",
+                    "1" : "train",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "val",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "train",
+                    "2" : "val",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split_5",
                 "mapping"  : {
                     "0" : "train",
                     "1" : "train",
@@ -105,6 +139,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "16/5 low data regime"
+        "group": "17/5 5 deg data split "
     }
 }

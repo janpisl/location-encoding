@@ -13,7 +13,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420],
+        "seed": [420, 421, 422],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1000],
@@ -24,7 +24,7 @@
         "early_stopping_patience": [30],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [5000],
+        "train_examples_per_class" : [50],
         
 
         "image_encoder": [
@@ -95,7 +95,7 @@
         "folds_to_split" : [
 
             {
-                "column" : "split",
+                "column" : "split_5",
                 "mapping"  : {
                     "0" : "val",
                     "1" : "train",
@@ -106,7 +106,7 @@
             },
 
             {
-                "column" : "split",
+                "column" : "split_5",
                 "mapping"  : {
                     "0" : "train",
                     "1" : "val",
@@ -117,7 +117,7 @@
             },
 
             {
-                "column" : "split",
+                "column" : "split_5",
                 "mapping"  : {
                     "0" : "train",
                     "1" : "train",
@@ -128,7 +128,7 @@
             },
 
             {
-                "column" : "split",
+                "column" : "split_5",
                 "mapping"  : {
                     "0" : "train",
                     "1" : "train",
@@ -156,6 +156,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "16/5 single-bi-trimodal evaluation"
+        "group": "17/5 single-bi-trimodal"
     }
 }

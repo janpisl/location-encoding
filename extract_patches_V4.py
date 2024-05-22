@@ -197,6 +197,55 @@ def load_dataset(dataset_name):
         }
 
 
+    elif dataset == 'soy_south_america':
+        dataset_prefix = 150000000
+        soy_folder = 'data/input_datasets/soy_south_america'
+        
+        label_gdf = get_tiles_as_gdf(soy_folder)
+        dataset_extent = box(*label_gdf.total_bounds)
+        class_mapping = {
+            1 : 'soy',
+        }
+
+
+    elif dataset == 'mapbiomas_peru':
+        dataset_prefix = 160000000
+        mapbiomas_peru_path = 'data/input_datasets/peru_coverage_2022.tif'
+
+        with rasterio.open(mapbiomas_peru_path) as src:
+            dataset_extent = box(*src.bounds)
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_peru_path]})
+        
+        class_mapping = {
+            9 : 'forest plantation',
+            15 : 'pasture', 
+            39 : 'soy',
+            35 : 'palm oil',
+            30 : 'mining',
+            24 : 'urban',
+            32 : 'hypersaline tidal flat',
+            33 : 'river, lake, ocean',
+            31 : 'aquaculture' 
+            
+        }
+        
+    elif dataset == 'cocoa_peru_points':
+        dataset_prefix = 170000000
+        cocoa_peru_path = 'data/input_datasets/cocoa_peru.tif.tif'
+
+
+        with rasterio.open(cocoa_peru_path) as src:
+            dataset_extent = box(*src.bounds)
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [cocoa_peru_path]})
+        
+        class_mapping = {
+            1 : 'cocoa',           
+        }
+
+
+
+
+
     return dataset_prefix, class_mapping, label_gdf, dataset_extent
 
 
@@ -414,6 +463,10 @@ if __name__ == '__main__':
         'cocoa_ecuador',
         'tyukavina_congo_basin_agri',
         'mines',
+        'soy_south_america',
+        'mapbiomas_peru',
+        'cocoa_peru_points',
+
         ]
 
 

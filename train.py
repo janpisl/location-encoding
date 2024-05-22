@@ -143,6 +143,17 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             best_val_acc = val_acc
             epochs_since_last_best = 0
 
+        try:
+            freeze_img_encoder_after_epoch = config['hyperparams']['image_encoder']['freeze_after']
+            if freeze_img_encoder_after_epoch == epoch:
+                # Freeze all layers except the last fully connected layer
+                for name, param in model.image_encoder.named_parameters():
+                    if 'fc' not in name:
+                        param.requires_grad = False
+        except KeyError:
+            continue
+
+
 
 def initialize_wandb(config, model, train_dl, val_dl):
 
@@ -178,7 +189,7 @@ def initialize_wandb(config, model, train_dl, val_dl):
         tab_enc_name = "no"
 
     try:
-        name = f"""dynamic 10/90;
+        name = f"""5_deg_split; 50 ex per class;
             {config['hyperparams']['image_encoder']['use']} img; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
             train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
@@ -267,13 +278,13 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)
+        main(config)'''
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         try:
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
@@ -285,8 +296,8 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_3_5.txt", "a") as sink:
-                sink.write(text)'''
+            with open("logs_17_5.txt", "a") as sink:
+                sink.write(text)
 
 
 

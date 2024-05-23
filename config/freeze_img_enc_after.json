@@ -36,6 +36,26 @@
                 "pretrained_backbone" : "True",
                 "moco_weights" : "False",
                 "freeze" : "False",
+                "freeze_after" : 1
+
+            },
+            {
+                "use" : "True",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze" : "False",
+                "freeze_after" : 3
+
+            },
+            {
+                "use" : "True",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze" : "False",
                 "freeze_after" : 5
 
             },
@@ -45,9 +65,20 @@
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
                 "moco_weights" : "False",
-                "freeze" : "False"
+                "freeze" : "False",
+                "freeze_after" : 7
 
-            }          
+            },
+            {
+                "use" : "True",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze" : "False",
+                "freeze_after" : 9
+
+            }
 
         ],
 
@@ -63,7 +94,7 @@
         "tabular_encoder": [
 
             {
-                "use" : "False",
+                "use" : "True",
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic"

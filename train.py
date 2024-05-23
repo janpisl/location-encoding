@@ -157,39 +157,20 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
 def initialize_wandb(config, model, train_dl, val_dl):
 
-    #name=f"""dst v4 {config['hyperparams']['seed']}
-    #  layer {config['hyperparams']['forestloss_params']['apply_after_layer']}
-    #   kernel {config['hyperparams']['forestloss_params']['kernel_size']}
-    #   sigma {config['hyperparams']['forestloss_params']['sigma']}"""
-
-    #f"""4 img; {config['hyperparams']['image_encoder']['type']}
-        #+ {config['hyperparams']['classifier']['type']} """
-
-    '''
-
-
     try:
-        name = f"""
-            {loc_enc_name} loc ; {tab_enc_name} tab;  {config['hyperparams']['classifier']['type']} cls;
-            train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
-            val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
-    except:
-        name = None'''
-    
 
-    if config['hyperparams']['loc_encoder']['use'] is True:
-        loc_enc_name = "yes" #config['hyperparams']['loc_encoder']['positional_embedding']
-    else:
-        loc_enc_name = "no"
+        if config['hyperparams']['loc_encoder']['use'] is True:
+            loc_enc_name = "yes" #config['hyperparams']['loc_encoder']['positional_embedding']
+        else:
+            loc_enc_name = "no"
 
-    if config['hyperparams']['tabular_encoder']['use'] is True:
-        tab_enc_name = config['hyperparams']['tabular_encoder']['type']
-        tab_dataset = config['hyperparams']['tabular_encoder']['dataset']
-    else:
-        tab_enc_name = "no"
+        if config['hyperparams']['tabular_encoder']['use'] is True:
+            tab_enc_name = config['hyperparams']['tabular_encoder']['type']
+            tab_dataset = config['hyperparams']['tabular_encoder']['dataset']
+        else:
+            tab_enc_name = "no"
 
-    try:
-        name = f"""5_deg_split; 50 ex per class;
+        name = f"""{config['hyperparams']['train_examples_per_class']} ex per class;
             {config['hyperparams']['image_encoder']['use']} img; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
             train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
@@ -296,7 +277,7 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_17_5.txt", "a") as sink:
+            with open("logs_22_5.txt", "a") as sink:
                 sink.write(text)
 
 

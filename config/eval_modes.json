@@ -3,7 +3,7 @@
 
     "data": {
         "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v4/labels_55k.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/SR_four_images",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/SR_one_image",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v4",
         "faostat_data": "/home/jan/Documents/EPFL/project_2/data/tabular/faostat_2000_2020_dynamic.csv",
         "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",

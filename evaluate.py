@@ -36,14 +36,28 @@ def evaluate(model, loss_fn, dataloader, device, config, return_preds_and_target
         y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
 
         loss = loss_fn(y_hat, labels_batch)
+        
+        #True where label is equal to a class that has a valid input value in tabular data (not the missing-value token)
+        #tabular_data_mask = (torch.gather(expansion_rates_batch, 1, labels_batch.unsqueeze(1)) != model.missing_tab_value_token).squeeze()
+
+        loss_main = loss.mean()  #loss from all examples
+        #loss_tabular = loss[tabular_data_mask].mean() # loss only for the commodity-related examples  
+
+
 
         y_hat = F.softmax(y_hat, dim=1)
         y_hat = y_hat.cpu().detach()
         labels_batch = labels_batch.cpu().detach()
 
-        losses.append(loss.item())
+        losses.append(loss_main.item())
         preds_batches.append(y_hat)
         targets_batches.append(labels_batch)
+
+
+
+
+
+
 
     targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
     preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()

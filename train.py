@@ -37,7 +37,7 @@ parser.add_argument('--restore_file', default=None,
                     training")  # 'best' or 'train'
 
 
-def train(model, optimizer, loss_fn, dataloader, device, config):
+def train(model, optimizer, loss_fn, dataloader, device, config, frozen_img_encoder):
     """Train the model for one epoch
 
     Args:
@@ -54,19 +54,56 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
     preds_batches = []
     targets_batches = []
 
+    # Separate the parameters
+    tabular_encoder_params = list(model.tabular_encoder.parameters())
+    other_params = [param for name, param in model.named_parameters() if "tabular_encoder" not in name]
+
     for train_batch, labels_batch in dataloader:
 
         image_batch, loc_batch, expansion_rates_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), train_batch[3].to(device), labels_batch.to(device)
         y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
 
         loss = loss_fn(y_hat, labels_batch)
-
         optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        if config['wandb']['log_to_wandb']:
-            wandb.log({"train-loss": loss.item()})
 
+        if config['hyperparams']['tabular_encoder']['selective_backprop']: 
+
+            #True where label is equal to a class that has a valid input value in tabular data (not the missing-value token)
+            tabular_data_mask = (torch.gather(expansion_rates_batch, 1, labels_batch.unsqueeze(1)) != model.missing_tab_value_token).squeeze()
+
+            loss_main = loss.mean()  #loss from all examples
+            loss_tabular = loss[tabular_data_mask].mean() # loss only for the commodity-related examples  
+
+            for param in tabular_encoder_params:
+                param.requires_grad = False
+
+            # Compute gradients for selected loss only for tabular_encoder parameters
+            loss_main.backward(retain_graph=True)
+
+            # Reset requires_grad for other parameters
+            for param in tabular_encoder_params:
+                param.requires_grad = True
+
+            if torch.any(tabular_data_mask).item(): 
+
+                for param in other_params:
+                    param.requires_grad = False
+                
+                # Compute gradients for selected loss only for tabular_encoder parameters
+                loss_tabular.backward()
+
+                # Reset requires_grad for other parameters
+                for param in other_params:
+                    param.requires_grad = True
+                if frozen_img_encoder:
+                    for name, param in model.image_encoder.named_parameters():
+                        if 'fc' not in name:
+                            param.requires_grad = False       
+        else:
+            loss = loss.mean() 
+            loss.backward()
+
+        optimizer.step()
 
         y_hat = y_hat.cpu().detach()
         preds = F.softmax(y_hat, dim=1)
@@ -74,8 +111,13 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
         
         preds_batches.append(preds)
         targets_batches.append(labels_batch)
-        
+
         if config['wandb']['log_to_wandb']:
+            if config['hyperparams']['tabular_encoder']['selective_backprop']: 
+                wandb.log({"train-loss": loss_main.item()})
+                wandb.log({"train-loss-tab-only": loss_tabular.item()})
+            else:
+                wandb.log({"train-loss": loss.item()})
             try:
                 wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
             except AttributeError:
@@ -114,6 +156,9 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     epochs_since_last_best = 0
     early_stopping_patience = config['hyperparams']['early_stopping_patience']
 
+    
+    frozen_image_encoder = False
+
     for epoch in range(epochs):
 
         if epochs_since_last_best > early_stopping_patience:
@@ -121,7 +166,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             break
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, device, config)
+        train(model, optimizer, loss_fn, train_dataloader, device, config, frozen_image_encoder)
 
 
         # Evaluate for one epoch on validation set
@@ -150,6 +195,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
                 for name, param in model.image_encoder.named_parameters():
                     if 'fc' not in name:
                         param.requires_grad = False
+                frozen_image_encoder = True
         except KeyError:
             continue
 
@@ -228,7 +274,8 @@ def main(config):
     model = model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
-    loss_fn = nn.CrossEntropyLoss(reduction='mean')
+
+    loss_fn = nn.CrossEntropyLoss(reduction='none')
 
     if config['wandb']['log_to_wandb']:
         run_id = initialize_wandb(config, model, train_dl, val_dl)
@@ -259,13 +306,13 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)'''
+        main(config)
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         try:
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
@@ -278,7 +325,7 @@ if __name__ == '__main__':
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
             with open("logs_22_5.txt", "a") as sink:
-                sink.write(text)
+                sink.write(text)'''
 
 
 

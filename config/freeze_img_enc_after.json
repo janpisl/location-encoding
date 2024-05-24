@@ -13,7 +13,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420],
+        "seed": [421],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1000],
@@ -24,7 +24,7 @@
         "early_stopping_patience": [30],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [1000],
+        "train_examples_per_class" : [50],
         
 
         "image_encoder": [
@@ -34,49 +34,7 @@
                 "type" : "cnn",
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze" : "False",
-                "freeze_after" : 1
-
-            },
-            {
-                "use" : "True",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze" : "False",
-                "freeze_after" : 3
-
-            },
-            {
-                "use" : "True",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze" : "False",
-                "freeze_after" : 5
-
-            },
-            {
-                "use" : "True",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze" : "False",
-                "freeze_after" : 7
-
-            },
-            {
-                "use" : "True",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze" : "False",
-                "freeze_after" : 9
+                "moco_weights" : "False"
 
             }
 
@@ -118,13 +76,47 @@
             {
                 "column" : "split_5",
                 "mapping"  : {
+                    "0" : "val",
+                    "1" : "train",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "val",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
                     "0" : "train",
                     "1" : "train",
                     "2" : "val",
                     "3" : "train",
                     "4" : "test"
                 }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "train",
+                    "2" : "train",
+                    "3" : "val",
+                    "4" : "test"
+                }
             }
+
 
 
         ],
@@ -144,6 +136,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "22/5 freeze img enc after"
+        "group": "24/5 freeze img enc after"
     }
 }

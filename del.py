@@ -1,7 +1,7 @@
 import torch
 
 def add_noise(tensor, noise_level=0.01):
-    # Compute the range of the tensor
+
     value_range = tensor.max() - tensor.min()
     
     # Generate random noise scaled by the range of the tensor and the desired noise level

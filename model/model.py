@@ -111,12 +111,6 @@ class MultiModalDriverClassifier(nn.Module):
         if self.use_image:
             self.image_encoder = get_image_encoder(kwargs)
 
-            if kwargs['hyperparams']['image_encoder']['freeze']:
-                # Freeze all layers except the last fully connected layer
-                for name, param in self.image_encoder.named_parameters():
-                    if 'fc' not in name:
-                        param.requires_grad = False
-
         self.use_location = kwargs['hyperparams']['loc_encoder']['use']
         if self.use_location:
             self.loc_encoder = LocationEncoder(positional_embedding=kwargs['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **kwargs)

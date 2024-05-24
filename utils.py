@@ -8,6 +8,7 @@ import os
 from pathlib import Path 
 import matplotlib.pyplot as plt
 import random
+import tqdm 
 
 import torch
 import rasterio
@@ -448,6 +449,7 @@ def extract_sample(
         min_ratio_for_driver,
         forest_loss_window,
         min_px_forest_loss):
+        
     
     forestloss_patch = forestloss_data[i:i+patch_rows, j:j+patch_cols]
 
@@ -475,4 +477,205 @@ def extract_sample(
 
     return _driver, forestloss_patch, _geom
 
+    
+
+
+    #### 
+
+
+import wandb
+
+def get_wandb_runs(filters, path="janpisl/project_2", skip_runs_with_no_data=True):
+    """Fetch runs from wandb, return them as a list of dicts
+
+    Args:
+        filters (dictionary): must adhere to wandb filtering structure
+        path (str, optional): path to project. Defaults to "janpisl/project_2".
+        skip_runs_with_no_data (bool, optional): don't include runs that contain no training/other logs. Defaults to True.
+
+    Returns:
+        List[dict]: contains 1 dictionary for each run
+    """
+    
+
+    api = wandb.Api()
+
+    runs = api.runs(path=path, filters=filters)
+
+    models = []
+
+    #Iterate over all runs fitting the filters, for each create a dictionary and add to a list of models
+    for i, run in enumerate(iter(runs)):
+        model_dict = {}
+
+        model_dict['config'] = run.config
+        model_dict['wandb_id'] = run.id
         
+        if skip_runs_with_no_data and len(run.summary.keys()) == 1: #This means there is no metrics -> killed or failed run
+            continue
+            
+        model_dict['summary'] = run.summary
+        
+        name= " ".join(run.name.split())
+        model_dict['name'] = name
+        models.append(model_dict)
+
+
+    return models
+
+
+
+import model.dataloader as dataloader
+from model.model import MultiModalDriverClassifier
+from evaluate import evaluate, compute_and_log_metrics
+
+import torch.nn as nn
+
+
+def load_model_and_predict(model_dict, n_classes, device, dataset='val'):
+    
+    wandb_id = model_dict['wandb_id']
+    model_dir = os.path.join('../models_trained', wandb_id)
+    config_path = os.path.join(model_dir, 'config.json')
+    with open(config_path) as source:
+        config = json.loads(source.read())
+
+    dl = dataloader.fetch_dataloader(
+        [dataset], config)[dataset]
+
+    #Load trained model
+    model = MultiModalDriverClassifier(n_classes,  **config)
+    model = model.to(device)
+
+    trained_weights = f'../models_trained/{wandb_id}/best.pt'
+    _ = model.load_state_dict(torch.load(trained_weights)['state_dict'])
+    _ = model.eval()
+
+    loss_fn = nn.CrossEntropyLoss(reduction='mean')
+
+    config['wandb']['log_to_wandb'] = False
+
+    metrics, preds, _ = evaluate(
+        model=model, 
+        loss_fn=loss_fn, 
+        dataloader=dl, 
+        device=device, 
+        config=config,
+        return_preds_and_targets=True
+    )
+
+    return metrics, preds
+
+
+
+
+
+from collections import defaultdict
+from typing import List, Dict, Any
+
+
+def find_keys_with_multiple_values(configs: List[Dict[str, Any]], exceptions: List[str] = ['# parameters', 'val dst size', 'train dst size', 'n_parameters', 'val_dst_size', 'train_dst_size']) -> Dict[str, Any]:
+    """return hyperparams from configs where the value is not identical for all configs
+
+    Args:
+        configs (List[dict]): contains all model configurations for which I want to find unique combinations
+        exceptions (list, optional): items in configuration that should not be taken into account
+
+    Returns:
+        dict: contains key:value pairs, where
+            key:  parameter (key in input config files) where the config files have different values 
+            value: all the unique values in the input config files
+    """
+
+    def extract_values(d, prefix=''):
+        for key, value in d.items():
+            full_key = f"{prefix}.{key}" if prefix else key
+            if isinstance(value, dict) and full_key != 'folds_to_split.mapping':
+                yield from extract_values(value, full_key)
+            else:
+                yield full_key, value
+
+    # Dictionary to store all values for each key
+    all_values = defaultdict(set)
+
+    # Extract values from each dictionary and populate all_values
+    for item in configs:
+        for key, value in extract_values(item):
+            if isinstance(value, dict):
+                value = tuple(sorted(value.items()))  # Convert dict to a hashable type
+            all_values[key].add(value)
+
+    # Filter keys with more than one unique value
+    result = {}
+    for key, values in all_values.items():
+        if len(values) > 1:
+            parts = key.split('.')
+            current = result
+            for part in parts[:-1]:
+                if part not in current:
+                    current[part] = {}
+                current = current[part]
+            current[parts[-1]] = list(values)
+
+    # Remove exceptions
+    filtered_result = {key: value for key, value in result.items() if key not in exceptions}
+
+    return filtered_result
+
+
+
+
+import itertools
+
+def generate_combinations(config, exclude_keys):
+    def flatten_dict(d, parent_key='', sep='.'):
+        items = []
+        for k, v in d.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, dict):
+                items.extend(flatten_dict(v, new_key, sep=sep).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
+
+    # Flatten the dictionary, excluding specified keys
+    flat_config = {}
+    for key, value in config.items():
+        if key in exclude_keys:
+            continue
+        if isinstance(value, list):
+            flat_config[key] = value
+        else:
+            nested_flat_config = flatten_dict(value, key)
+            flat_config.update(nested_flat_config)
+
+    # Generate all combinations
+    keys, values = zip(*flat_config.items())
+    product_combinations = itertools.product(*values)
+
+    # Reconstruct nested dictionaries from the combinations
+    def unflatten_dict(d):
+        result = {}
+        for key, value in d.items():
+            parts = key.split('.')
+            d = result
+            for part in parts[:-1]:
+                d = d.setdefault(part, {})
+            d[parts[-1]] = value
+        return result
+
+    combinations = [unflatten_dict(dict(zip(keys, combination))) for combination in product_combinations]
+
+    return combinations
+
+
+
+
+def find_key_for_value(data, target_value):
+    #by ChatGPT
+    matching_keys = [key for key, value in data.items() if value == target_value]
+    
+    if len(matching_keys) != 1:
+        raise ValueError("There is not exactly one key corresponding to the value")
+    
+    return matching_keys[0]

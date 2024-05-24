@@ -116,6 +116,15 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
     for epoch in range(epochs):
 
+        try:
+            if config['hyperparams']['image_encoder']['freeze_after'] == epoch:
+                # Freeze all layers except the last fully connected layer
+                for name, param in model.image_encoder.named_parameters():
+                    if 'fc' not in name:
+                        param.requires_grad = False
+        except KeyError:
+            pass
+
         if epochs_since_last_best > early_stopping_patience:
             print(f'No improvement for {early_stopping_patience} epochs. Early stopping at epoch {epoch}')
             break
@@ -143,15 +152,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             best_val_acc = val_acc
             epochs_since_last_best = 0
 
-        try:
-            freeze_img_encoder_after_epoch = config['hyperparams']['image_encoder']['freeze_after']
-            if freeze_img_encoder_after_epoch == epoch:
-                # Freeze all layers except the last fully connected layer
-                for name, param in model.image_encoder.named_parameters():
-                    if 'fc' not in name:
-                        param.requires_grad = False
-        except KeyError:
-            continue
+
 
 
 
@@ -170,10 +171,18 @@ def initialize_wandb(config, model, train_dl, val_dl):
         else:
             tab_enc_name = "no"
 
+        train_split = [int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]
+        val_split = [int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]
+
+        try:
+            freeze_after = f"freeze after {config['hyperparams']['image_encoder']['freeze_after']}" 
+        except KeyError:
+            freeze_after = 'no freeze'
+
         name = f""" {config['hyperparams']['train_examples_per_class']} ex per class;
-            {config['hyperparams']['image_encoder']['use']} (one) img; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
-            train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
-            val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
+            {config['hyperparams']['image_encoder']['use']} ({config['n_images']}) img, {freeze_after}; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
+            train {train_split}
+            val {val_split}"""
     except:
         name = None
 
@@ -188,10 +197,10 @@ def initialize_wandb(config, model, train_dl, val_dl):
     )
 
     log_config = config['hyperparams']
-    log_config['# parameters'] = utils.count_parameters(model)
+    log_config['n_parameters'] = utils.count_parameters(model)
 
-    log_config['train dst size'] = len(train_dl.dataset)
-    log_config['val dst size'] = len(val_dl.dataset)
+    log_config['train_dst_size'] = len(train_dl.dataset)
+    log_config['val_dst_size'] = len(val_dl.dataset)
 
     wandb.config.update(log_config)
 
@@ -271,13 +280,13 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)
+        main(config)'''
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         try:
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
@@ -289,8 +298,8 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_23_5.txt", "a") as sink:
-                sink.write(text)'''
+            with open("logs_24_5.txt", "a") as sink:
+                sink.write(text)
 
 
 

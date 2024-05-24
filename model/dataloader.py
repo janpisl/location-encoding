@@ -30,18 +30,19 @@ class SelectBands(Module):
         if band_indices:
             self.band_indices = band_indices
         else:
-            try:
-
-                self.band_indices = [True, True, True, True, False] #The default is RGBNIR (without the QA60 band)
-            except:
-                self.band_indices = [True, True, True, True]  #for more recent data i haven't been using the QA60 band
+            self.band_indices = [True, True, True, True, False] #The default is RGBNIR (without the QA60 band)
 
     def forward(self, img):
-        #in temporal case, the first dimension is temporal - band indices are 2nd
-        if len(img.shape) == 3:
-            return img[self.band_indices]
-        elif len(img.shape) == 4:
-            return img[:, self.band_indices]
+        try:
+            #in temporal case, the first dimension is temporal - band indices are 2nd
+            if len(img.shape) == 3:
+                return img[self.band_indices]
+            elif len(img.shape) == 4:
+                return img[:, self.band_indices]
+        except:
+            self.band_indices = [True, True, True, True]  #for more recent data i haven't been using the QA60 band
+            return self.forward(img)
+
 
 
 class ConditionalTransform(Module):

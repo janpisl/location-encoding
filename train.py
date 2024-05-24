@@ -170,8 +170,8 @@ def initialize_wandb(config, model, train_dl, val_dl):
         else:
             tab_enc_name = "no"
 
-        name = f"""{config['hyperparams']['train_examples_per_class']} ex per class;
-            {config['hyperparams']['image_encoder']['use']} img; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
+        name = f""" {config['hyperparams']['train_examples_per_class']} ex per class;
+            {config['hyperparams']['image_encoder']['use']} (one) img; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
             train {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]}
             val {[int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]}"""
     except:
@@ -227,7 +227,19 @@ def main(config):
     model = MultiModalDriverClassifier(n_classes,  **config)
     model = model.to(device)
 
+    '''
+    # Separate the parameters
+    img_enc = [param for name, param in model.image_encoder.named_parameters() if 'fc' not in name]
+    other_params = [param for name, param in model.named_parameters() if "image_encoder" not in name]
+    
+    # Define the optimizer with two parameter groups
+    optimizer = optim.Adam([
+        {'params': other_params},
+        {'params': img_enc, 'lr': config['hyperparams']['learning_rate']/100}  
+    ], lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay']) '''
+        
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
+
     loss_fn = nn.CrossEntropyLoss(reduction='mean')
 
     if config['wandb']['log_to_wandb']:
@@ -259,13 +271,13 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)'''
+        main(config)
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         try:
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
@@ -277,8 +289,8 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_22_5.txt", "a") as sink:
-                sink.write(text)
+            with open("logs_23_5.txt", "a") as sink:
+                sink.write(text)'''
 
 
 

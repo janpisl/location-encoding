@@ -13,7 +13,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420, 421, 422],
+        "seed": [420, 421],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1000],
@@ -24,20 +24,11 @@
         "early_stopping_patience": [30],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [50],
+        "train_examples_per_class" : [1000],
         
 
         "image_encoder": [
 
-            {
-                "use" : "False",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze" : "False"
-
-            },
             {
                 "use" : "True",
                 "type" : "cnn",
@@ -71,7 +62,7 @@
                 "type" : "token",
                 "temporal_processing" : "dynamic"
 
-            },
+            } ,
             {
                 "use" : "True",
                 "dataset" : "deduce",
@@ -156,6 +147,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "17/5 single-bi-trimodal"
+        "group": "23/5 one image single-bi-trimodal"
     }
 }

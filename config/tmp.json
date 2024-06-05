@@ -21,7 +21,7 @@
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [15],
+        "early_stopping_patience": [40],
 
         "embedding_dim" : [128],
         "train_examples_per_class" : [500],
@@ -29,19 +29,19 @@
 
         "image_encoder": [
 
+
             {
                 "use" : "True",
                 "type" : "cnn",
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
                 "moco_weights" : "False",
-                "freeze" : "False"
-
+                "freeze_after": 6
             }
+
         ],
 
         "loc_encoder": [
-
             {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
@@ -50,17 +50,20 @@
         ],   
 
         "tabular_encoder": [
-
             {
                 "use" : "False",
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic"
 
-            }
+            },
+            {
+                "use" : "True",
+                "dataset" : "deduce",
+                "type" : "token",
+                "temporal_processing" : "dynamic"
 
-
-
+            }            
 
         ],
 
@@ -76,50 +79,17 @@
 
         "folds_to_split" : [
 
-
-            {
-                "column" : "split_5",
-                "mapping"  : {
-                    "0" : "val",
-                    "1" : "train",
-                    "2" : "train",
-                    "3" : "train",
-                    "4" : "test"
-                }
-            },
-
-            {
-                "column" : "split_5",
-                "mapping"  : {
-                    "0" : "train",
-                    "1" : "val",
-                    "2" : "train",
-                    "3" : "train",
-                    "4" : "test"
-                }
-            },
-
-            {
-                "column" : "split_5",
-                "mapping"  : {
-                    "0" : "train",
-                    "1" : "train",
-                    "2" : "val",
-                    "3" : "train",
-                    "4" : "test"
-                }
-            },
-
             {
                 "column" : "split_5",
                 "mapping"  : {
                     "0" : "train",
                     "1" : "train",
                     "2" : "train",
-                    "3" : "val",
-                    "4" : "test"
+                    "3" : "train",
+                    "4" : "val"
                 }
             }
+
 
 
         ],
@@ -139,6 +109,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "17/5 5 deg data split "
+        "group": ""
     }
 }

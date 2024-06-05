@@ -9,3 +9,5 @@ misc/
 
 last_idx.txt
 logs*
+
+*/*pickle

@@ -16,7 +16,7 @@
         "seed": [420, 421],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1],
+        "epochs": [1000],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
@@ -24,18 +24,11 @@
         "early_stopping_patience": [40],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [50, 500, 5000],
+        "train_examples_per_class" : [100, 200],
         
 
         "image_encoder": [
 
-            {
-                "use" : "False",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False"
-            },
             {
                 "use" : "True",
                 "type" : "cnn",
@@ -161,6 +154,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "test"
+        "group": "25/5 eval freezing enc, modalities, n of examples"
     }
 }

@@ -55,7 +55,7 @@ def get_loc_encoder(config):
                 degreeinput=True
             )
     elif _type == 'fc':
-        LocationEncoder(positional_embedding=config['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **config)
+        return LocationEncoder(positional_embedding=config['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **config)
 
 
 

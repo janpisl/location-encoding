@@ -6,7 +6,7 @@ import torch
 from model.model_blocks import *
 from model.loc_encoder import LocationEncoder
 from model.legacy_models import CNN_Att_LSTM
-
+from model.siren import SirenNet
 
 def get_image_encoder(config):
     """Get image encoder that takes in input in shape BxTxCxWxH or BxCxWxH 
@@ -33,6 +33,30 @@ def get_image_encoder(config):
         encoder = TemporalWrapper(get_resnet(config['hyperparams']['image_encoder']['backbone'], config['hyperparams']['embedding_dim'], **config))
 
     return encoder
+
+def get_loc_encoder(config):
+
+
+    loc_enc_config = config['hyperparams']['loc_encoder']
+
+    try:
+        _type = loc_enc_config['type'].lower()
+        assert _type in ['siren', 'fc'], f'invalid loc enc option, allowed are "siren" or "fc", got: {_type}'
+    except KeyError: #For backwards compatibility
+        _type = 'fc'
+
+    if _type ==  "siren":
+    
+        return SirenNet(
+                dim_in=2, # it is 2 (lat,lon) because i don't use any PE()
+                dim_hidden=config['hyperparams']['embedding_dim'],
+                num_layers=loc_enc_config['num_layers'],
+                dim_out=config['hyperparams']['embedding_dim'],
+                dropout=loc_enc_config['dropout'] if "dropout" in loc_enc_config.keys() else False,
+                degreeinput=True
+            )
+    elif _type == 'fc':
+        LocationEncoder(positional_embedding=config['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **config)
 
 
 
@@ -113,7 +137,8 @@ class MultiModalDriverClassifier(nn.Module):
 
         self.use_location = kwargs['hyperparams']['loc_encoder']['use']
         if self.use_location:
-            self.loc_encoder = LocationEncoder(positional_embedding=kwargs['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **kwargs)
+
+            self.loc_encoder = get_loc_encoder(kwargs['hyperparams']['loc_encoder'])
         
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:

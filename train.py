@@ -25,7 +25,7 @@ import model.dataloader as dataloader
 from evaluate import evaluate, compute_and_log_metrics
 from model.model import MultiModalDriverClassifier
 
-
+from model.loss import TabRegularizationLoss
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data/64x64_SIGNS',
@@ -57,9 +57,18 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
     for train_batch, labels_batch in dataloader:
 
         image_batch, loc_batch, expansion_rates_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), train_batch[3].to(device), labels_batch.to(device)
-        y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
+        
+        #i need to filter  each item in the batch based on the indices of where the tab data was provided
+        non_tab_indices = ~torch.isnan(expansion_rates_batch)
+        with torch.no_grad():
+            expansion_rates_batch_aux = expansion_rates_batch.clone()
+            expansion_rates_batch_aux.fill_(float('nan'))
+            y_hat_aux = model(image_batch, loc_batch, expansion_rates_batch_aux, forestloss_batch)
 
-        loss = loss_fn(y_hat, labels_batch)
+        y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
+        
+        #loss = loss_fn(y_hat, labels_batch)
+        loss = loss_fn(y_hat_aux, y_hat, labels_batch, non_tab_indices)
 
         optimizer.zero_grad()
         loss.backward()
@@ -249,7 +258,8 @@ def main(config):
         
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
 
-    loss_fn = nn.CrossEntropyLoss(reduction='mean')
+    #loss_fn = nn.CrossEntropyLoss(reduction='mean')
+    loss_fn = TabRegularizationLoss(temperature=0, regularization_method='l1')
 
     if config['wandb']['log_to_wandb']:
         run_id = initialize_wandb(config, model, train_dl, val_dl)
@@ -280,13 +290,13 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)'''
+        main(config)
 
-    for i, variant in enumerate(permutations_dicts):
+    '''for i, variant in enumerate(permutations_dicts):
 
         try:
             config['hyperparams'] = variant
@@ -300,7 +310,7 @@ if __name__ == '__main__':
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
             with open("logs_25_5.txt", "a") as sink:
-                sink.write(text)
+                sink.write(text)'''
 
 
 

@@ -59,7 +59,6 @@ def get_loc_encoder(config):
 
 
 
-
 def get_classifier(output_classes, config):
     """Get a module with a forward() that takes in a list of tokens
     and outputs class logits 

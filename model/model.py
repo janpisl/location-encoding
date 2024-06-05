@@ -36,7 +36,6 @@ def get_image_encoder(config):
 
 def get_loc_encoder(config):
 
-
     loc_enc_config = config['hyperparams']['loc_encoder']
 
     try:
@@ -137,8 +136,7 @@ class MultiModalDriverClassifier(nn.Module):
 
         self.use_location = kwargs['hyperparams']['loc_encoder']['use']
         if self.use_location:
-
-            self.loc_encoder = get_loc_encoder(kwargs['hyperparams']['loc_encoder'])
+            self.loc_encoder = get_loc_encoder(kwargs)
         
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:

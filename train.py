@@ -286,23 +286,7 @@ if __name__ == '__main__':
         config = utils.parse_boolean_recursion(config)
         main(config)'''
 
-    skip = True
-
     for i, variant in enumerate(permutations_dicts):
-
-        #TEMPORARY
-        if skip:
-            if variant['seed'] == 420 \
-            and variant['train_examples_per_class'] == 200 \
-            and variant['image_encoder']['freeze_after'] == 6 \
-            and variant['loc_encoder']['use'] == "True" \
-            and variant['tabular_encoder']['use'] == "True" \
-            and variant['folds_to_split']['mapping']['2'] == 'val':
-                skip = False
-        
-
-        if skip:
-            continue 
 
         try:
             config['hyperparams'] = variant

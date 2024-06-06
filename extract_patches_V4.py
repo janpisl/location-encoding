@@ -243,6 +243,38 @@ def load_dataset(dataset_name):
         }
 
 
+    elif dataset == 'mapbiomas_bolivia':
+        dataset_prefix = 180000000
+        mapbiomas_peru_path = 'data/input_datasets/bolivia_coverage_2021.tif'
+
+        with rasterio.open(mapbiomas_peru_path) as src:
+            dataset_extent = box(*src.bounds)
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_peru_path]})
+        
+        class_mapping = {
+            15 : 'pasture', 
+            30 : 'mining',
+            24 : 'urban',
+            33 : 'river, lake, ocean',
+            
+        }
+
+    elif dataset == 'mapbiomas_bolivia':
+        dataset_prefix = 180000000
+        mapbiomas_peru_path = 'data/input_datasets/manual_annotation/'
+
+        with rasterio.open(mapbiomas_peru_path) as src:
+            dataset_extent = box(*src.bounds)
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_peru_path]})
+        
+        class_mapping = {
+            15 : 'pasture', 
+            30 : 'mining',
+            24 : 'urban',
+            33 : 'river, lake, ocean',
+            
+        }
+
 
 
 

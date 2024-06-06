@@ -164,6 +164,46 @@ class TemporalWrapperV2(nn.Module):
         return out_reshaped
 
 
+
+
+
+class TabularEncoder(nn.Module):
+    def __init__(self, n_classes=12, token_size=10, out_dim=128):
+        super(TabularEncoder, self).__init__()
+        self.missing_tab_value_token = nn.Parameter(torch.zeros(token_size))
+        torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
+
+        self.n_classes = n_classes
+        self.token_size = token_size
+
+        self.fc_layers = nn.ModuleList([nn.Linear(1, token_size) for _ in range(n_classes)])
+        self.shared_fc_layer = nn.Linear(token_size*n_classes, out_dim)
+
+        
+    def forward(self, x):
+        outputs = []
+        
+        for i in range(self.n_classes):
+            current_feature = x[:, i].unsqueeze(1)  # Select the i-th feature for all batch items
+            
+            # Create a mask for NaN values
+            mask = torch.isnan(current_feature)
+            
+            # Apply the fully connected layer to non-NaN values
+            processed_feature = self.fc_layers[i](current_feature)
+            
+            # Replace NaN values with the missing value token
+            current_feature_with_nan_replaced = torch.where(mask, self.missing_value_token, processed_feature)
+            
+            outputs.append(current_feature_with_nan_replaced)
+        
+        concatenated = torch.cat(outputs, dim=1)
+        result = self.shared_fc_layer(concatenated)
+        
+        return result
+
+
+
 def load_seco_weights(net, path='../pretrained_models/seco_resnet18_1m.ckpt'):
 
     #https://github.com/Lightning-AI/pytorch-lightning/issues/15451#issuecomment-1298724879

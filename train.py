@@ -75,11 +75,11 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
         preds_batches.append(preds)
         targets_batches.append(labels_batch)
         
-        if config['wandb']['log_to_wandb']:
+        '''if config['wandb']['log_to_wandb']:
             try:
                 wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
             except AttributeError:
-                pass
+                pass'''
 
     targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
     preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
@@ -280,11 +280,11 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)'''
+        main(config)
 
     for i, variant in enumerate(permutations_dicts):
 

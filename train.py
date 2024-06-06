@@ -9,6 +9,7 @@ import itertools
 import pdb
 from pathlib import Path
 import pprint
+from datetime import datetime
 
 import pandas as pd
 import wandb
@@ -141,9 +142,9 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # compute number of batches in one epoch (one full pass over the training set)
         train(model, optimizer, loss_fn, train_dataloader, device, config)
 
-
+        
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, device, config)
+        val_metrics = evaluate(model, torch.nn.functional.cross_entropy, val_dataloader, device, config)
 
         val_acc = val_metrics['accuracy']
         is_best = val_acc >= best_val_acc
@@ -188,7 +189,8 @@ def initialize_wandb(config, model, train_dl, val_dl):
         except KeyError:
             freeze_after = 'no freeze'
 
-        name = f""" {config['hyperparams']['train_examples_per_class']} ex per class;
+        #name = f"""{config['hyperparams']['train_examples_per_class']} ex per class;
+        name = f"""temp {config['hyperparams']['regularization_temperature']};cos similarity; {config['hyperparams']['train_examples_per_class']} ex per class;
             {config['hyperparams']['image_encoder']['use']} ({config['n_images']}) img, {freeze_after}; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
             train {train_split}
             val {val_split}"""
@@ -259,7 +261,7 @@ def main(config):
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
 
     #loss_fn = nn.CrossEntropyLoss(reduction='mean')
-    loss_fn = TabRegularizationLoss(temperature=0, regularization_method='l1')
+    loss_fn = TabRegularizationLoss(temperature=config['hyperparams']['regularization_temperature'], regularization_method='cosine_similarity')
 
     if config['wandb']['log_to_wandb']:
         run_id = initialize_wandb(config, model, train_dl, val_dl)
@@ -296,7 +298,24 @@ if __name__ == '__main__':
         config = utils.parse_boolean_recursion(config)
         main(config)
 
-    '''for i, variant in enumerate(permutations_dicts):
+    '''skip = True
+
+    for i, variant in enumerate(permutations_dicts):
+
+
+        #TEMPORARY
+        if skip:
+            if variant['seed'] == 421 \
+            and variant['train_examples_per_class'] == 100 \
+            and variant['image_encoder']['freeze_after'] == 1000 \
+            and variant['loc_encoder']['use'] == "False" \
+            and variant['tabular_encoder']['use'] == "True" \
+            and variant['folds_to_split']['mapping']['0'] == 'val':
+                skip = False
+
+
+        if skip:
+            continue 
 
         try:
             config['hyperparams'] = variant
@@ -309,7 +328,7 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_25_5.txt", "a") as sink:
+            with open(f"logs_{datetime.today().strftime('%m_%d')}.txt", "a") as sink:
                 sink.write(text)'''
 
 

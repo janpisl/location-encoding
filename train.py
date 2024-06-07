@@ -292,19 +292,19 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)
+        main(config)'''
 
-    '''skip = True
+    #skip = True
 
     for i, variant in enumerate(permutations_dicts):
 
 
         #TEMPORARY
-        if skip:
+        '''if skip:
             if variant['seed'] == 421 \
             and variant['train_examples_per_class'] == 100 \
             and variant['image_encoder']['freeze_after'] == 1000 \
@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
 
         if skip:
-            continue 
+            continue'''
 
         try:
             config['hyperparams'] = variant
@@ -329,7 +329,7 @@ if __name__ == '__main__':
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
             with open(f"logs_{datetime.today().strftime('%m_%d')}.txt", "a") as sink:
-                sink.write(text)'''
+                sink.write(text)
 
 
 

@@ -22,14 +22,23 @@
         "in_channels": [4],
         "use_forestloss" : ["True"],
         "early_stopping_patience": [50],
-        "regularization_temperature": [0, 0.05, 0.1, 0.2, 0.3, 0.5],
+        "regularization_temperature": [0, 0.02, 0.1],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [100],
+        "train_examples_per_class" : [50, 100, 500],
         
 
         "image_encoder": [
-   
+ 
+            {
+                "use" : "True",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze_after": 6
+            },
+
             {
                 "use" : "True",
                 "type" : "cnn",
@@ -38,6 +47,7 @@
                 "moco_weights" : "False",
                 "freeze_after": 1000
             }
+
 
 
         ],
@@ -78,15 +88,46 @@
             {
                 "column" : "split_5",
                 "mapping"  : {
+                    "0" : "val",
+                    "1" : "train",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "val",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "test"
+                }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
                     "0" : "train",
                     "1" : "train",
                     "2" : "val",
                     "3" : "train",
                     "4" : "test"
                 }
+            },
+
+            {
+                "column" : "split_5",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "train",
+                    "2" : "train",
+                    "3" : "val",
+                    "4" : "test"
+                }
             }
-
-
 
         ],
 
@@ -105,6 +146,6 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "5/6 cosine regularization"
+        "group": "6/6 cosine regularization with freezing"
     }
 }

@@ -13,7 +13,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420, 421],
+        "seed": [420],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1000],
@@ -24,7 +24,7 @@
         "early_stopping_patience": [40],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [100, 200],
+        "train_examples_per_class" : [10, 20, 50, 100, 200, 500, 5000],
         
 
         "image_encoder": [
@@ -35,25 +35,13 @@
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
                 "moco_weights" : "False",
-                "freeze_after": 6
-            },   
-            {
-                "use" : "True",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze_after": 1000
+                "freeze_after" : "x"
             }
 
         ],
 
         "loc_encoder": [
 
-            {
-                "use" : "False",
-                "positional_embedding": "cartesian3d"
-            },
             {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
@@ -62,13 +50,7 @@
         ],   
 
         "tabular_encoder": [
-            {
-                "use" : "False",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic"
-
-            },      
+  
             {
                 "use" : "True",
                 "dataset" : "deduce",

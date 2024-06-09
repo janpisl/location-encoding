@@ -37,6 +37,16 @@ parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
 
+freezing_dict = {
+    10: 20,
+    20: 20,
+    50 : 15,
+    100 : 10,
+    200 : 6,
+    500 : 4,
+    5000 : 2
+}
+
 
 def train(model, optimizer, loss_fn, dataloader, device, config):
     """Train the model for one epoch
@@ -125,9 +135,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     early_stopping_patience = config['hyperparams']['early_stopping_patience']
 
     for epoch in range(epochs):
-
         try:
-            if config['hyperparams']['image_encoder']['freeze_after'] == epoch:
+            if freezing_dict[config['hyperparams']['train_examples_per_class']] == epoch:
                 # Freeze all layers except the last fully connected layer
                 for name, param in model.image_encoder.named_parameters():
                     if 'fc' not in name:
@@ -190,7 +199,7 @@ def initialize_wandb(config, model, train_dl, val_dl):
             freeze_after = 'no freeze'
 
         #name = f"""{config['hyperparams']['train_examples_per_class']} ex per class;
-        name = f"""temp {config['hyperparams']['regularization_temperature']};cos similarity; {config['hyperparams']['train_examples_per_class']} ex per class;
+        name = f"""{config['hyperparams']['train_examples_per_class']} ex per class; freeze after {freezing_dict[config['hyperparams']['train_examples_per_class']] } ep;
             {config['hyperparams']['image_encoder']['use']} ({config['n_images']}) img, {freeze_after}; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
             train {train_split}
             val {val_split}"""
@@ -261,7 +270,7 @@ def main(config):
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
 
     #loss_fn = nn.CrossEntropyLoss(reduction='mean')
-    loss_fn = TabRegularizationLoss(temperature=config['hyperparams']['regularization_temperature'], regularization_method='cosine_similarity')
+    loss_fn = TabRegularizationLoss(temperature=0, regularization_method='cosine_similarity')
 
     if config['wandb']['log_to_wandb']:
         run_id = initialize_wandb(config, model, train_dl, val_dl)
@@ -301,7 +310,6 @@ if __name__ == '__main__':
     #skip = True
 
     for i, variant in enumerate(permutations_dicts):
-
 
         #TEMPORARY
         '''if skip:

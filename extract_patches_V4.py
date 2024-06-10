@@ -231,7 +231,7 @@ def load_dataset(dataset_name):
         
     elif dataset == 'cocoa_peru_points':
         dataset_prefix = 170000000
-        cocoa_peru_path = 'data/input_datasets/cocoa_peru.tif'
+        cocoa_peru_path = 'data/input_datasets/cocoa_peru.tif.tif'
 
 
         with rasterio.open(cocoa_peru_path) as src:
@@ -242,8 +242,26 @@ def load_dataset(dataset_name):
             1 : 'cocoa',           
         }
 
-    elif dataset == 'manual_annotation':
+
+    elif dataset == 'mapbiomas_bolivia':
         dataset_prefix = 180000000
+        mapbiomas_peru_path = 'data/input_datasets/bolivia_coverage_2021.tif'
+
+        with rasterio.open(mapbiomas_peru_path) as src:
+            dataset_extent = box(*src.bounds)
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_peru_path]})
+        
+        class_mapping = {
+            15 : 'pasture', 
+            30 : 'mining',
+            24 : 'urban',
+            33 : 'river, lake, ocean',
+            
+        }
+
+
+    elif dataset == 'manual_annotation':
+        dataset_prefix = 190000000
         manual_annotation = 'data/input_datasets/manual_annotation/rasters'
         
         label_gdf = get_tiles_as_gdf(manual_annotation)
@@ -255,7 +273,7 @@ def load_dataset(dataset_name):
         }
 
     elif dataset == 'africa_masolele':
-        dataset_prefix = 190000000
+        dataset_prefix = 210000000
         folders_masolele_rasters = 'data/input_datasets/Africa_Masolele/rasters'
         
         label_gdf = get_tiles_as_gdf(folders_masolele_rasters)
@@ -271,7 +289,6 @@ def load_dataset(dataset_name):
             16 : 'urban'
 
         }
-
 
     return dataset_prefix, class_mapping, label_gdf, dataset_extent
 
@@ -494,8 +511,8 @@ if __name__ == '__main__':
         'mapbiomas_peru',
         'cocoa_peru_points',
         'manual_annotation',
+        'mapbiomas_bolivia',
         'africa_masolele'
-
         ]
 
 

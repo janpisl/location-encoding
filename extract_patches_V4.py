@@ -165,7 +165,7 @@ def load_dataset(dataset_name):
             1 : 'cocoa',
         }
 
-    elif dataset == 'cofee_sdpt_brazil':
+    elif dataset == 'coffee_sdpt_brazil':
         dataset_prefix = 120000000
         coffee_sdpt_folder = 'data/input_datasets/sdpt_coffee_brazil'
         
@@ -231,7 +231,7 @@ def load_dataset(dataset_name):
         
     elif dataset == 'cocoa_peru_points':
         dataset_prefix = 170000000
-        cocoa_peru_path = 'data/input_datasets/cocoa_peru.tif.tif'
+        cocoa_peru_path = 'data/input_datasets/cocoa_peru_200_4326.tif'
 
 
         with rasterio.open(cocoa_peru_path) as src:
@@ -245,11 +245,11 @@ def load_dataset(dataset_name):
 
     elif dataset == 'mapbiomas_bolivia':
         dataset_prefix = 180000000
-        mapbiomas_peru_path = 'data/input_datasets/bolivia_coverage_2021.tif'
+        mapbiomas_bolivia_path = 'data/input_datasets/bolivia_coverage_2021.tif'
 
-        with rasterio.open(mapbiomas_peru_path) as src:
+        with rasterio.open(mapbiomas_bolivia_path) as src:
             dataset_extent = box(*src.bounds)
-        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_peru_path]})
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_bolivia_path]})
         
         class_mapping = {
             15 : 'pasture', 
@@ -262,7 +262,7 @@ def load_dataset(dataset_name):
 
     elif dataset == 'manual_annotation':
         dataset_prefix = 190000000
-        manual_annotation = 'data/input_datasets/manual_annotation/rasters'
+        manual_annotation = 'data/input_datasets/manual_annotation/rasters_fixed/'
         
         label_gdf = get_tiles_as_gdf(manual_annotation)
         dataset_extent = box(*label_gdf.total_bounds)
@@ -274,7 +274,7 @@ def load_dataset(dataset_name):
 
     elif dataset == 'africa_masolele':
         dataset_prefix = 210000000
-        folders_masolele_rasters = 'data/input_datasets/Africa_Masolele/rasters'
+        folders_masolele_rasters = 'data/input_datasets/Africa_Masolele/rasters_projected'
         
         label_gdf = get_tiles_as_gdf(folders_masolele_rasters)
         dataset_extent = box(*label_gdf.total_bounds)
@@ -284,11 +284,53 @@ def load_dataset(dataset_name):
             5 : 'forest plantation',
             9 : 'urban',
             11 : 'other',
-            12 : 'oil palm',
+            12 : 'palm oil',
             13 : 'rubber',
             16 : 'urban'
 
         }
+
+    elif dataset == 'colombia_pasture':
+        dataset_prefix = 220000000
+        colombia_pasture_rasters = 'data/input_datasets/colombia_pasture/'
+        
+        label_gdf = get_tiles_as_gdf(colombia_pasture_rasters)
+        dataset_extent = box(*label_gdf.total_bounds)
+        class_mapping = {
+            1 : 'pasture',
+        }
+
+
+    elif dataset == 'mapbiomas_paraguay':
+        dataset_prefix = 230000000
+        mapbiomas_paraguay_path = 'data/input_datasets/paraguay_coverage_2022.tif'
+
+        with rasterio.open(mapbiomas_paraguay_path) as src:
+            dataset_extent = box(*src.bounds)
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_paraguay_path]})
+        
+        class_mapping = {
+            15 : 'pasture', 
+
+            
+        }
+
+    elif dataset == 'mapbiomas_venezuela':
+        dataset_prefix = 240000000
+        mapbiomas_venezuela_path = 'data/input_datasets/venezuela_coverage_2022.tif'
+
+        with rasterio.open(mapbiomas_venezuela_path) as src:
+            dataset_extent = box(*src.bounds)
+        label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_venezuela_path]})
+        
+        class_mapping = {
+            15 : 'pasture', 
+
+            
+        }
+
+
+
 
     return dataset_prefix, class_mapping, label_gdf, dataset_extent
 
@@ -350,7 +392,8 @@ def extract_patches(
         patch_rows,
         patch_cols,
         min_px_forest_loss,
-        min_ratio_for_driver
+        min_ratio_for_driver,
+        detailed_iter=False #If true, use stride 1 instead of stride of patch_size
         ):
 
 
@@ -388,32 +431,75 @@ def extract_patches(
                 
             assert forestloss_data.shape == label_data.shape
             
-            for i in range(0, forestloss_data.shape[0], patch_rows):
-                for j in range(0, forestloss_data.shape[1], patch_cols):
-                    
+            #####
+            if detailed_iter:  
+                #print(forestloss_data.shape)
 
-                    sample = extract_sample(
-                                forestloss_data,
-                                forestloss_profile,
-                                label_data,
-                                i,
-                                j,
-                                patch_rows,
-                                patch_cols,
-                                target_years,
-                                target_values,
-                                min_ratio_for_driver,
-                                forest_loss_window,
-                                min_px_forest_loss)
-                    
-                    
-                    if sample: #If conditions are not met, it returns None; if not, it contains the three items
-                        driver_class, forestloss, patch_geometry = sample
-                        drivers.append(int(driver_class))
+                i = 0
+                j = 0
+                #import pdb; pdb.set_trace()
+                while i < forestloss_data.shape[0]:
 
-                        geoms.append(patch_geometry)
-                        sampleids.append(sampleid)
-                        sampleid += 1
+                    while j < forestloss_data.shape[1]:
+                        
+                        sample = extract_sample(
+                                    forestloss_data,
+                                    forestloss_profile,
+                                    label_data,
+                                    i,
+                                    j,
+                                    patch_rows,
+                                    patch_cols,
+                                    target_years,
+                                    target_values,
+                                    min_ratio_for_driver,
+                                    forest_loss_window,
+                                    min_px_forest_loss)
+                        
+                        
+                        if sample: #If conditions are not met, it returns None; if not, it contains the three items
+                            driver_class, forestloss, patch_geometry = sample
+                            drivers.append(int(driver_class))
+
+                            geoms.append(patch_geometry)
+                            sampleids.append(sampleid)
+                            sampleid += 1
+
+                            j += 33
+                        else:
+                            j += 2
+                    i += 33
+                    j = 0
+
+            ####
+            else:
+
+                for i in range(0, forestloss_data.shape[0], patch_rows):
+                    for j in range(0, forestloss_data.shape[1], patch_cols):
+                        
+
+                        sample = extract_sample(
+                                    forestloss_data,
+                                    forestloss_profile,
+                                    label_data,
+                                    i,
+                                    j,
+                                    patch_rows,
+                                    patch_cols,
+                                    target_years,
+                                    target_values,
+                                    min_ratio_for_driver,
+                                    forest_loss_window,
+                                    min_px_forest_loss)
+                        
+                        
+                        if sample: #If conditions are not met, it returns None; if not, it contains the three items
+                            driver_class, forestloss, patch_geometry = sample
+                            drivers.append(int(driver_class))
+
+                            geoms.append(patch_geometry)
+                            sampleids.append(sampleid)
+                            sampleid += 1
 
             if len(label_gdf) == 1: #For e.g., MapBiomas, i want prints per TMF tile 
                 print(f"Items: {len(geoms)}")
@@ -433,13 +519,13 @@ def main(
         patch_rows,
         patch_cols,
         min_px_forest_loss,
-        min_ratio_for_driver
+        min_ratio_for_driver,
+        extract_max_patches #If true, change stride to iterate much slower but potentially extracting more samples
         ):
     
     print(f'Processing dataset: {dataset}')
-
     dataset_prefix, class_mapping, label_gdf, dataset_extent = load_dataset(dataset_name=dataset)
-
+    
     target_values = [key for key in class_mapping.keys()]
 
     filtered_forestloss = forestloss_tiles.loc[forestloss_tiles.intersects(dataset_extent)]
@@ -453,7 +539,8 @@ def main(
         patch_rows=patch_rows,
         patch_cols=patch_cols,
         min_px_forest_loss=min_px_forest_loss,
-        min_ratio_for_driver=min_ratio_for_driver
+        min_ratio_for_driver=min_ratio_for_driver,
+        detailed_iter=extract_max_patches
     )
 
     gdf = gpd.GeoDataFrame(geometry=geoms)
@@ -481,7 +568,7 @@ def main(
 if __name__ == '__main__':
 
     print('starting')
-    target_years = list(range(2010, 2020))
+    target_years = list(range(2000, 2020))
 
     patch_rows, patch_cols = 33, 33 #as close as possible to 1km square
     min_px_forest_loss = 15 #Pixel size is 30x30m;
@@ -494,27 +581,44 @@ if __name__ == '__main__':
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     datasets = [
+        #'cocoa_peru_points',
+        'manual_annotation',
+        #'mapbiomas_bolivia',
+        #'africa_masolele',
+        'colombia_pasture',
+        'mapbiomas_paraguay',
+
         'rubber',
         'cocoa',
         'mapbiomas',
         'vancutsem_regrowth',
-        #'laos_shifting_agriculture',
         'coffee_maskell',
         'mapbiomas_indonesia',
         'palm_oil', 
         'worldcover',
-        'cofee_sdpt_brazil', 
+        'coffee_sdpt_brazil', 
         'cocoa_ecuador',
         'tyukavina_congo_basin_agri',
         'mines',
         'soy_south_america',
         'mapbiomas_peru',
-        'cocoa_peru_points',
-        'manual_annotation',
-        'mapbiomas_bolivia',
-        'africa_masolele'
+        'mapbiomas_venezuela',
+
         ]
 
 
     for dataset in datasets:
-        main(dataset, target_years, forestloss_tiles, output_dir, patch_rows, patch_cols, min_px_forest_loss, min_ratio_for_driver)
+        if not dataset == 'manual_annotation':
+            continue
+        if dataset in ['manual_annotation', 'africa_masolele', 'coffee_sdpt_brazil']:
+            extract_max_patches = True
+        else:
+            extract_max_patches = False
+        main(dataset, 
+             target_years, 
+             forestloss_tiles, 
+             output_dir, 
+             patch_rows, patch_cols, 
+             min_px_forest_loss, 
+             min_ratio_for_driver, 
+             extract_max_patches=extract_max_patches)

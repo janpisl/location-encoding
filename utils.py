@@ -8,7 +8,6 @@ import os
 from pathlib import Path 
 import matplotlib.pyplot as plt
 import random
-import tqdm 
 
 import torch
 import rasterio
@@ -19,12 +18,9 @@ from torchmetrics import ConfusionMatrix
 from matplotlib.colors import LogNorm
 from shapely.geometry import Polygon, box
 from sklearn.metrics import confusion_matrix
+from rasterio.warp import calculate_default_transform, reproject, Resampling
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
 
 
 
@@ -679,3 +675,46 @@ def find_key_for_value(data, target_value):
         raise ValueError("There is not exactly one key corresponding to the value")
     
     return matching_keys[0]
+
+
+
+def reproject_raster(input_raster_path, output_raster_path,dst_crs='EPSG:4326'):
+    """
+    Reprojects a raster 
+
+    Parameters:
+    input_raster_path (str): Path to the input raster file.
+    output_raster_path (str): Path to the output raster file.
+    """
+    # Open the input raster
+    with rasterio.open(input_raster_path) as src:
+        # Get the original CRS
+        src_crs = src.crs
+
+        
+        # Calculate the transform and new dimensions
+        transform, width, height = calculate_default_transform(
+            src_crs, dst_crs, src.width, src.height, *src.bounds)
+        
+        # Define the metadata for the output raster
+        kwargs = src.meta.copy()
+        kwargs.update({
+            'crs': dst_crs,
+            'transform': transform,
+            'width': width,
+            'height': height
+        })
+        
+        # Create the output raster and reproject the data
+        with rasterio.open(output_raster_path, 'w', **kwargs) as dst:
+            for i in range(1, src.count + 1):
+                reproject(
+                    source=rasterio.band(src, i),
+                    destination=rasterio.band(dst, i),
+                    src_transform=src.transform,
+                    src_crs=src_crs,
+                    dst_transform=transform,
+                    dst_crs=dst_crs,
+                    compress='lzw',
+                    resampling=Resampling.nearest)
+

@@ -30,18 +30,20 @@ class SelectBands(Module):
         if band_indices:
             self.band_indices = band_indices
         else:
-            self.band_indices = [True, True, True, True, False] #The default is RGBNIR (without the QA60 band)
+            #s2 bands= ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B11', 'B12']
+            #self.band_indices = [True, True, True, True, False] #The default is RGBNIR (without the QA60 band)
+            self.band_indices = [False, True, True, True, False, False, False, True, False, False, False, False] #i have all 12 bands
 
     def forward(self, img):
-        try:
-            #in temporal case, the first dimension is temporal - band indices are 2nd
-            if len(img.shape) == 3:
-                return img[self.band_indices]
-            elif len(img.shape) == 4:
-                return img[:, self.band_indices]
-        except:
-            self.band_indices = [True, True, True, True]  #for more recent data i haven't been using the QA60 band
-            return self.forward(img)
+        #try:
+        #in temporal case, the first dimension is temporal - band indices are 2nd
+        if len(img.shape) == 3:
+            return img[self.band_indices]
+        elif len(img.shape) == 4:
+            return img[:, self.band_indices]
+        #except:
+        #    self.band_indices = [True, True, True, True]  #for more recent data i haven't been using the QA60 band
+        #    return self.forward(img)
 
 
 

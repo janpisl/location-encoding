@@ -117,7 +117,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     for epoch in range(epochs):
 
         try:
-            if config['hyperparams']['image_encoder']['freeze_after'] == epoch:
+            if epochs_since_last_best > config['hyperparams']['image_encoder']['freezing_patience']:
                 # Freeze all layers except the last fully connected layer
                 for name, param in model.image_encoder.named_parameters():
                     if 'fc' not in name:
@@ -175,9 +175,9 @@ def initialize_wandb(config, model, train_dl, val_dl):
         val_split = [int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]
 
         try:
-            freeze_after = f"freeze after {config['hyperparams']['image_encoder']['freeze_after']}" 
+            freeze_after = f"freeze patience {config['hyperparams']['image_encoder']['freezing_patience']}" 
         except KeyError:
-            freeze_after = 'no freeze'
+            freeze_after = ' ? freeze'
 
         name = f""" {config['hyperparams']['train_examples_per_class']} ex per class;
             {config['hyperparams']['image_encoder']['use']} ({config['n_images']}) img, {freeze_after}; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
@@ -231,6 +231,8 @@ def main(config):
     )
     
     config['n_images'] = num_images
+    if 'freeze_after' in config['hyperparams']['image_encoder'].keys():
+        print('Old configuration for img freezing')
 
     # Define the model and optimizer
     model = MultiModalDriverClassifier(n_classes,  **config)
@@ -246,7 +248,9 @@ def main(config):
         {'params': other_params},
         {'params': img_enc, 'lr': config['hyperparams']['learning_rate']/100}  
     ], lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay']) '''
-        
+
+
+
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
 
     loss_fn = nn.CrossEntropyLoss(reduction='mean')
@@ -286,6 +290,7 @@ if __name__ == '__main__':
         config = utils.parse_boolean_recursion(config)
         main(config)'''
 
+
     for i, variant in enumerate(permutations_dicts):
 
         try:
@@ -299,7 +304,7 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_25_5.txt", "a") as sink:
+            with open("logs_18_6.txt", "a") as sink:
                 sink.write(text)
 
 

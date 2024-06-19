@@ -9,7 +9,7 @@ import itertools
 import pdb
 from pathlib import Path
 import pprint
-import datetime
+from datetime import datetime
 
 import pandas as pd
 import wandb

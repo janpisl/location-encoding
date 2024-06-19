@@ -9,6 +9,7 @@ import itertools
 import pdb
 from pathlib import Path
 import pprint
+import datetime
 
 import pandas as pd
 import wandb
@@ -304,7 +305,7 @@ if __name__ == '__main__':
             main(config)
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
-            with open("logs_18_6.txt", "a") as sink:
+            with open(f"logs_{datetime.today().strftime('%m_%d')}.txt", "a") as sink:
                 sink.write(text)
 
 

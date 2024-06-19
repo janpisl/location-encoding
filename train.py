@@ -127,7 +127,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     for epoch in range(epochs):
 
         try:
-            if config['hyperparams']['image_encoder']['freeze_after'] == epoch:
+            if epochs_since_last_best > config['hyperparams']['image_encoder']['freezing_patience']:
                 # Freeze all layers except the last fully connected layer
                 for name, param in model.image_encoder.named_parameters():
                     if 'fc' not in name:

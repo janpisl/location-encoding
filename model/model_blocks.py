@@ -13,10 +13,12 @@ import torchvision.models as models
 
 
 class TransformerClassifier(nn.Module):
-    def __init__(self, output_classes, **config):
+    def __init__(self, output_classes, token_size=10, **config):
         super(TransformerClassifier, self).__init__()
 
         embedding_dim = config['hyperparams']['embedding_dim']
+        self.output_classes = output_classes
+        self.token_size = token_size
 
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=embedding_dim, 
@@ -27,9 +29,9 @@ class TransformerClassifier(nn.Module):
             enable_nested_tensor=False #Get rid of annoying warnings
             )
 
-        self.cls_token = nn.Parameter(torch.randn(embedding_dim))
-
-        self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
+        #self.classifier = nn.Linear(embedding_dim, out_features=output_classes, bias = True)
+        
+        self.fc_layers = nn.ModuleList([nn.Linear(token_size, 1) for _ in range(output_classes)])
 
         
     def forward(self, tokens):
@@ -40,16 +42,26 @@ class TransformerClassifier(nn.Module):
                             or a group of tokens (shape NxBxD)
 
         """
+
         #Get all tokens in shape NxBxD and concat them together into a tensor of NxBxD (num_tokens, batch, embed_dim)
         tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in tokens], dim=0)
 
-        #Make cls_token tensor in shape (1,B,D)
-        cls_tokens = self.cls_token.repeat(tokens.shape[1],1).unsqueeze(dim=0)
+        #The last token is the TAB token - given by the order in which they are appended in model.forward
+        tab_token_output = self.transformer_enc(tokens)[-1]
+        
+        batch = tab_token_output.shape[0]
+        #tab_token_output is of shape (BxD), ie 64x120
+        #the first
 
-        features = torch.cat([cls_tokens, tokens])
+        predictions = torch.full((batch, self.output_classes), float('nan'), device='cuda')
+        for i in range(self.output_classes):
+            predictions[:, i] = self.fc_layers[i](tab_token_output[:, i*self.token_size:(i+1)*self.token_size ]).squeeze()
 
-        cls_token_output = self.transformer_enc(features)[0]
-        predictions = self.classifier(cls_token_output) 
+            #processed_feature = self.fc_layers[i](current_feature)
+
+
+        
+        #predictions = self.classifier(tab_token_output) 
         
         return predictions
 
@@ -89,6 +101,43 @@ class FullyConnectedClassifier(nn.Module):
         tokens = torch.cat(processed_tokens, dim=1)
 
         return self.classifier(tokens)
+
+class TabularEncoder(nn.Module):
+    def __init__(self, n_classes=12, token_size=10, out_dim=120):
+        super(TabularEncoder, self).__init__()
+        
+        assert n_classes*token_size == out_dim
+
+        self.missing_tab_value_token = nn.Parameter(torch.zeros(token_size))
+        torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
+
+        self.n_classes = n_classes
+        self.token_size = token_size
+
+        self.fc_layers = nn.ModuleList([nn.Linear(1, token_size) for _ in range(n_classes)])
+
+
+
+    def forward(self, x):
+        outputs = []
+
+        for i in range(self.n_classes):
+            current_feature = x[:, i].unsqueeze(1)  # Select the i-th feature for all batch items
+
+            # Create a mask for NaN values
+            mask = torch.isnan(current_feature)
+
+            # Apply the fully connected layer to non-NaN values
+            processed_feature = self.fc_layers[i](current_feature)
+
+            # Replace NaN values with the missing value token
+            current_feature_with_nan_replaced = torch.where(mask, self.missing_tab_value_token, processed_feature)
+
+            outputs.append(current_feature_with_nan_replaced)
+
+        result = torch.cat(outputs, dim=1)
+
+        return result
 
 
 

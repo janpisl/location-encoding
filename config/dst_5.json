@@ -21,7 +21,7 @@
         "use_forestloss" : ["True"],
         "early_stopping_patience": [200],
 
-        "embedding_dim" : [128],
+        "embedding_dim" : [120],
         "train_examples_per_class" : [500],
         
 
@@ -41,10 +41,6 @@
         "loc_encoder": [
 
             {
-                "use" : "False",
-                "positional_embedding": "cartesian3d"
-            },
-            {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
             }
@@ -53,15 +49,7 @@
         ],   
 
         "tabular_encoder": [
- 
 
-            {
-                "use" : "False",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic"
-
-            },
             {
                 "use" : "True",
                 "dataset" : "deduce",
@@ -110,7 +98,7 @@
     },
 
     "wandb": {
-        "log_to_wandb" : "True",
+        "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
         "group": "18/6 dst 5, new split"

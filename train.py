@@ -26,6 +26,8 @@ import model.dataloader as dataloader
 from evaluate import evaluate, compute_and_log_metrics
 from model.model import MultiModalDriverClassifier
 
+from model.loss import TabRegularizationLoss
+
 
 
 parser = argparse.ArgumentParser()
@@ -38,7 +40,7 @@ parser.add_argument('--restore_file', default=None,
                     training")  # 'best' or 'train'
 
 
-def train(model, optimizer, loss_fn, dataloader, device, config):
+def train(model, optimizer, loss_fn, dataloader, device, config, custom_regularization):
     """Train the model for one epoch
 
     Args:
@@ -55,12 +57,25 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
     preds_batches = []
     targets_batches = []
 
+
     for train_batch, labels_batch in dataloader:
 
         image_batch, loc_batch, expansion_rates_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), train_batch[3].to(device), labels_batch.to(device)
-        y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
 
-        loss = loss_fn(y_hat, labels_batch)
+
+        if custom_regularization:
+            #i need to filter  each item in the batch based on the indices of where the tab data was provided
+            non_tab_indices = ~torch.isnan(expansion_rates_batch)
+            with torch.no_grad():
+                expansion_rates_batch_aux = expansion_rates_batch.clone()
+                expansion_rates_batch_aux.fill_(float('nan'))
+                y_hat_aux = model(image_batch, loc_batch, expansion_rates_batch_aux, forestloss_batch)
+
+            y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)        
+            loss = loss_fn(y_hat_aux, y_hat, labels_batch, non_tab_indices)
+        else:
+            y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
+            loss = loss_fn(y_hat, labels_batch)
 
         optimizer.zero_grad()
         loss.backward()
@@ -114,7 +129,12 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     epochs = config['hyperparams']['epochs']
     epochs_since_last_best = 0
     early_stopping_patience = config['hyperparams']['early_stopping_patience']
-
+    
+    try:
+        regul = config['hyperparams']['two_model_regularization']['use']
+    except KeyError:
+        regul = False
+    
     for epoch in range(epochs):
 
         try:
@@ -131,11 +151,14 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             break
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, device, config)
+        train(model, optimizer, loss_fn, train_dataloader, device, config, custom_regularization=regul)
 
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, device, config)
+        if regul:
+            val_metrics = evaluate(model, torch.nn.functional.cross_entropy, val_dataloader, device, config)
+        else:
+            val_metrics = evaluate(model, loss_fn, val_dataloader, device, config)
 
         val_acc = val_metrics['accuracy']
         is_best = val_acc >= best_val_acc
@@ -254,7 +277,16 @@ def main(config):
 
     optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
 
-    loss_fn = nn.CrossEntropyLoss(reduction='mean')
+    try:
+        regularization = config['hyperparams']['two_model_regularization']['use']
+    except KeyError:
+        regularization = False
+
+    if regularization:
+        loss_fn = TabRegularizationLoss(temperature=config['hyperparams']['two_model_regularization']['temperature'], regularization_method=config['hyperparams']['two_model_regularization']['metric'])
+    else:
+       loss_fn = nn.CrossEntropyLoss(reduction='mean')
+
 
     if config['wandb']['log_to_wandb']:
         run_id = initialize_wandb(config, model, train_dl, val_dl)

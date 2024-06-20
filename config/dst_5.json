@@ -11,7 +11,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420],
+        "seed": [421],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [100],
@@ -21,9 +21,9 @@
         "use_forestloss" : ["True"],
         "early_stopping_patience": [10],
 
-        "model_version": ["v1", "v2"],
+        "model_version": ["v1"],
 
-        "embedding_dim" : [120, 128],
+        "embedding_dim" : [128],
         "train_examples_per_class" : [100],
         
 
@@ -53,7 +53,7 @@
         "tabular_encoder": [
 
             {
-                "use" : "True",
+                "use" : "False",
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic"

@@ -9,7 +9,7 @@ import copy
 from typing import List
 import torch
 import torchvision.models as models
-
+import math
 
 
 class TransformerClassifier(nn.Module):
@@ -53,6 +53,135 @@ class TransformerClassifier(nn.Module):
         
         return predictions
 
+    
+
+
+class TransformerClassifierV2(TransformerClassifier):
+    def __init__(self, output_classes, token_size=10, **config):
+        super(TransformerClassifierV2, self).__init__()
+
+        self.classifier = None        
+        self.fc_layers = nn.ModuleList([nn.Linear(token_size, 1) for _ in range(output_classes)])
+
+        
+    def forward(self, tokens):
+        """_summary_
+
+        Args:
+            tokens (list): set of tokens, each item in list is either a single token of shape BxD (batch, embedding_dim),
+                            or a group of tokens (shape NxBxD)
+
+        """
+
+        #Get all tokens in shape NxBxD and concat them together into a tensor of NxBxD (num_tokens, batch, embed_dim)
+        tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in tokens], dim=0)
+
+        #The last token is the TAB token - given by the order in which they are appended in model.forward
+        tab_token_output = self.transformer_enc(tokens)[-1]
+        
+        batch = tab_token_output.shape[0]
+        #tab_token_output is of shape (BxD), ie 64x120
+
+        predictions = torch.full((batch, self.output_classes), float('nan'), device='cuda')
+        for i in range(self.output_classes):
+            predictions[:, i] = self.fc_layers[i](tab_token_output[:, i*self.token_size:(i+1)*self.token_size ]).squeeze()
+                
+        return predictions
+
+
+
+
+class TabularEncoder(nn.Module):
+    def __init__(self, n_classes=12, out_dim=120):
+        super(TabularEncoder, self).__init__()
+        
+        #assert n_classes*token_size == out_dim #Doesn't have to be true, but then some parameters are wasted
+
+        self.token_size = math.floor(out_dim/n_classes)
+
+        self.padding = out_dim % n_classes
+
+        self.missing_tab_value_token = nn.Parameter(torch.zeros(self.token_size))
+        torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
+
+        self.n_classes = n_classes
+        self.token_size = self.token_size
+
+        self.out_dim = out_dim
+
+        self.fc_layers = nn.ModuleList([nn.Linear(1, self.token_size) for _ in range(n_classes)])
+
+
+    def forward(self, x):
+        outputs = []
+
+        for i in range(self.n_classes):
+            current_class_tab_values = x[:, i].unsqueeze(1)  # Select the i-th class for all batch items
+
+            # Create a mask for NaN values
+            mask = torch.isnan(current_class_tab_values)
+
+            #encoded_cls_tab_values = self.fc_layers[i](current_class_tab_values)
+            
+            #Only feeding non-NaN values to the fc layers
+            encoded_cls_tab_values_non_nan = self.fc_layers[i](current_class_tab_values[~mask].unsqueeze(1))
+
+            # Create 10 values of the output token; for each item in batch, it's either 
+            # the missing_tab_value_token  (if no tab data provided) 
+            # or the encoded tab values, which are written in the next step
+            encoded_cls_tab_values_no_data_token = torch.where(mask, self.missing_tab_value_token, float('nan'))
+
+            encoded_cls_tab_values_no_data_token[~mask.squeeze()] = encoded_cls_tab_values_non_nan
+
+            outputs.append(encoded_cls_tab_values_no_data_token)
+
+        result = torch.cat(outputs, dim=1)
+        
+        if self.padding > 0:
+            pad = (1, self.padding-1)
+            result = F.pad(result, pad, "constant", 0)
+
+        return result
+
+
+
+
+
+
+class TemporalWrapper(nn.Module):
+    def __init__(self, model):
+        super(TemporalWrapper, self).__init__()
+
+        self.model = model
+        
+    def forward(self, x, forestloss):
+        """_summary_
+
+        Args:
+            x (input time series): shape BxTxCxWxH
+            model (optional)
+
+        Returns:
+            _type_: _description_
+        """
+
+        if len(x.shape) == 4: #If single-temporal (ie. no T dimenison), add the T axis
+            x = x.unsqueeze(1)
+        
+        model_outputs  = []
+        #Length of temporal series
+        temporal_steps = x.shape[1] 
+
+        for i in range(temporal_steps):
+            if forestloss is not None:
+                model_outputs.append(self.model(x[:,i], forestloss))
+            else:
+                model_outputs.append(self.model(x[:,i]))
+        #Stack along new axis
+        model_outputs = torch.stack(model_outputs, dim=0)
+        
+        return model_outputs
+
 
 class FullyConnectedClassifier(nn.Module):
     def __init__(self, output_classes, input_dimension, **config):
@@ -92,116 +221,6 @@ class FullyConnectedClassifier(nn.Module):
 
 
 
-class TemporalWrapper(nn.Module):
-    def __init__(self, model):
-        super(TemporalWrapper, self).__init__()
-
-        self.model = model
-        
-    def forward(self, x, forestloss):
-        """_summary_
-
-        Args:
-            x (input time series): shape BxTxCxWxH
-            model (optional)
-
-        Returns:
-            _type_: _description_
-        """
-
-        if len(x.shape) == 4: #If single-temporal (ie. no T dimenison), add the T axis
-            x = x.unsqueeze(1)
-        
-        model_outputs  = []
-        #Length of temporal series
-        temporal_steps = x.shape[1] 
-
-        for i in range(temporal_steps):
-            if forestloss is not None:
-                model_outputs.append(self.model(x[:,i], forestloss))
-            else:
-                model_outputs.append(self.model(x[:,i]))
-        #Stack along new axis
-        model_outputs = torch.stack(model_outputs, dim=0)
-        
-        return model_outputs
-
-
-
-class TemporalWrapperV2(nn.Module):
-    def __init__(self, model):
-        super(TemporalWrapperV2, self).__init__()
-
-        self.model = model
-        
-    def forward(self, x, forestloss):
-        """_summary_
-
-        Args:
-            x (input time series): shape BxTxCxWxH
-            model (optional)
-
-        Returns:
-            Tensor: output features of shape BxTxD (D=output dimension of model passed at init)
-        """
-
-        if len(x.shape) == 4: #If single-temporal (ie. no T dimenison), add the T axis
-            x = x.unsqueeze(1)
-
-        B, T, C, W, H = x.size()
-        # Reshape x to: (B*T)xCxWxH to apply the model on each frame
-        x_reshaped = x.view(B * T, C, W, H)
-        # Apply the model
-        if forestloss is not None:
-            out = self.model(x_reshaped, forestloss)
-        else:
-            out = self.model(x_reshaped)
-        
-        # Assuming the model's output is a feature vector of shape (B*T)xFeatureDim
-        # Reshape output back to: BxTxFeatureDim
-        out_reshaped = out.view(B, T, -1)
-        
-        return out_reshaped
-
-
-def load_seco_weights(net, path='../pretrained_models/seco_resnet18_1m.ckpt'):
-
-    #https://github.com/Lightning-AI/pytorch-lightning/issues/15451#issuecomment-1298724879
-    from pytorch_lightning.utilities.migration import pl_legacy_patch
-    with pl_legacy_patch():
-        seco_weights = torch.load(path)
-    enc_q = {k:v for k,v in seco_weights['state_dict'].items() if k.startswith('encoder_q')}
-    enc_q_v2 = {k.replace("encoder_q.", ""):v for k,v in enc_q.items()}
-
-    enc_q_v2['conv1.weight'] = enc_q_v2.pop('0.weight')
-    enc_q_v2['bn.weight'] = enc_q_v2.pop('1.weight')
-    enc_q_v2['bn1.bias'] = enc_q_v2.pop('1.bias')
-    enc_q_v2['bn1.running_mean'] = enc_q_v2.pop('1.running_mean')
-    enc_q_v2['bn1.running_var'] = enc_q_v2.pop('1.running_var')
-    enc_q_v2['bn1.num_batches_tracked'] = enc_q_v2.pop('1.num_batches_tracked')
-    enc_q_v3 = {k.replace("4.", "layer1."):v for k,v in enc_q_v2.items()}
-    enc_q_v3 = {k.replace("5.", "layer2."):v for k,v in enc_q_v3.items()}
-    enc_q_v3 = {k.replace("6.", "layer3."):v for k,v in enc_q_v3.items()}
-    enc_q_v3 = {k.replace("7.", "layer4."):v for k,v in enc_q_v3.items()}
-
-    net.load_state_dict(enc_q_v3, strict=False)
-
-
-def load_moco_weights(net):
-    from torchgeo.models import ResNet18_Weights
-    
-    #Get S-2 MoCo weights (13 channels)
-    weights = ResNet18_Weights.SENTINEL2_ALL_MOCO
-    state_dict = weights.get_state_dict(progress=True)
-
-    #Select R,G,B,NIR channels (indices 1,2,3,7 - not sure how to verify this is correct)
-    selected_channels = state_dict['conv1.weight'][:, [1, 2, 3, 7], :, :]
-    state_dict['conv1.weight'] = selected_channels
-
-    net.load_state_dict(state_dict, strict=False)
-
-
-
 def get_resnet(resnet_type, output_size=None, **kwargs):
 
     pretrained = kwargs['hyperparams']['image_encoder']['pretrained_backbone']
@@ -216,19 +235,11 @@ def get_resnet(resnet_type, output_size=None, **kwargs):
         raise ValueError("Unknown resnet type")
 
 
-
     if kwargs['hyperparams']['use_forestloss']:
         assert resnet_type == 'resnet18', 'Other types of resnet not supported atm'
         modified_net = ModifiedResNet18(models.resnet.BasicBlock, [2, 2, 2, 2], apply_after_layer=kwargs['hyperparams']['forestloss_params']['apply_after_layer'])
         modified_net.load_state_dict(net.state_dict())
         net = modified_net
-
-    '''try:
-        use_seco = kwargs['hyperparams']['image_encoder']['seco_weights']
-    except KeyError:
-        use_seco = False
-    if use_seco:
-        load_seco_weights(net)'''
 
     if pretrained: # Create a convlayer and spread the RGB pretrained weights to as many channels as there in the inputs
         net = set_up_pretrained_resnet(net, in_channels=kwargs['hyperparams']['in_channels'])  
@@ -241,14 +252,6 @@ def get_resnet(resnet_type, output_size=None, **kwargs):
                             bias=False)                
         nn.init.kaiming_normal_(net.conv1.weight, mode="fan_out", nonlinearity="relu")
     
-
-    try:
-        use_moco = kwargs['hyperparams']['image_encoder']['moco_weights']
-    except KeyError:
-        use_moco = False
-    if use_moco:
-        load_moco_weights(net)
-
 
     #If output_size is specified, create a fully connected layer with that out_features
     #Otherwise, the default fc layer with 1000 output size remains

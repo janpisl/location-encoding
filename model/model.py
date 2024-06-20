@@ -127,6 +127,12 @@ class MultiModalDriverClassifier(nn.Module):
     def __init__(self, output_classes, **kwargs):
         super(MultiModalDriverClassifier, self).__init__()
 
+        try:
+            self.model_version = kwargs['hyperparams']['model_version']
+            assert self.model_version in ['v1', 'v2', 'v3']
+        except KeyError:
+            self.model_version = 'v1'
+
         self.embedding_dim = kwargs['hyperparams']['embedding_dim']
         self.classifier = get_classifier(output_classes, kwargs)
 
@@ -142,16 +148,19 @@ class MultiModalDriverClassifier(nn.Module):
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             if self.tabular_processing == 'token':
-                self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
-                try:
-                    learn_missing_value = kwargs['hyperparams']['tabular_encoder']['learn_missing_value']
-                except KeyError:
-                    learn_missing_value = True
-                if learn_missing_value:
-                    self.missing_tab_value_token = nn.Parameter(torch.zeros(1))
-                    torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
-                else:
-                    self.missing_tab_value_token = 0.
+                if self.model_version == 'v1':
+                    self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
+                    try:
+                        learn_missing_value = kwargs['hyperparams']['tabular_encoder']['learn_missing_value']
+                    except KeyError:
+                        learn_missing_value = True
+                    if learn_missing_value:
+                        self.missing_tab_value_token = nn.Parameter(torch.zeros(1))
+                        torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
+                    else:
+                        self.missing_tab_value_token = 0.
+                elif self.model_version == 'v2':
+                    self.tabular_encoder = TabularEncoder(out_dim=self.embedding_dim)
     
     def forward(self, image_data, location, tabular_data, forestloss_patch=None):
         
@@ -166,15 +175,18 @@ class MultiModalDriverClassifier(nn.Module):
             features.append(loc_features)
 
         if self.use_tabular:
-            if self.tabular_processing == 'token':
-                tabular_data[torch.isnan(tabular_data)] = self.missing_tab_value_token
+            if self.model_version == "v1":
+                if self.tabular_processing == 'token':
+                    tabular_data[torch.isnan(tabular_data)] = self.missing_tab_value_token
+                    tabular_data = self.tabular_encoder(tabular_data)
+                elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
+                    tabular_data = tabular_data.unsqueeze(1)
+                    tabular_data = tabular_data.repeat(1, self.embedding_dim)
+            elif self.model_version == 'v2':
                 tabular_data = self.tabular_encoder(tabular_data)
-            elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
-                tabular_data = tabular_data.unsqueeze(1)
-                tabular_data = tabular_data.repeat(1, self.embedding_dim)
-            
+
             features.append(tabular_data)
-        
+
         predictions = self.classifier(features)
 
         return predictions

@@ -81,10 +81,9 @@ def train(model, optimizer, loss_fn, dataloader, device, config):
                 wandb.log({"missing token value": model.missing_tab_value_token.detach().cpu().item()})
             except AttributeError:
                 pass
-
+    
     targets = torch.cat(targets_batches, axis=0).cpu().detach().numpy()
     preds = torch.cat(preds_batches, axis=0).cpu().detach().argmax(dim=1).numpy()
-    
     #Compute metrics over the training set and log to wandb
     _ = compute_and_log_metrics(targets, preds, 'train', config['wandb']['log_to_wandb'])
 
@@ -114,15 +113,18 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
     epochs = config['hyperparams']['epochs']
     epochs_since_last_best = 0
     early_stopping_patience = config['hyperparams']['early_stopping_patience']
+    frozen = False
 
     for epoch in range(epochs):
 
         try:
-            if epochs_since_last_best > config['hyperparams']['image_encoder']['freezing_patience']:
+            if not frozen and epochs_since_last_best > config['hyperparams']['image_encoder']['freezing_patience']:
                 # Freeze all layers except the last fully connected layer
                 for name, param in model.image_encoder.named_parameters():
                     if 'fc' not in name:
                         param.requires_grad = False
+                frozen = True
+                wandb.log({"freezing-epoch": epoch})
         except KeyError:
             pass
 
@@ -292,7 +294,7 @@ if __name__ == '__main__':
         main(config)
 
 
-    for i, variant in enumerate(permutations_dicts):
+    '''for i, variant in enumerate(permutations_dicts):
 
         try:
             config['hyperparams'] = variant
@@ -306,7 +308,7 @@ if __name__ == '__main__':
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
             with open(f"logs_{datetime.today().strftime('%m_%d')}.txt", "a") as sink:
-                sink.write(text)
+                sink.write(text)'''
 
 
 

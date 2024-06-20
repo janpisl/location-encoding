@@ -51,17 +51,14 @@ class TransformerClassifier(nn.Module):
         
         batch = tab_token_output.shape[0]
         #tab_token_output is of shape (BxD), ie 64x120
-        #the first
 
         predictions = torch.full((batch, self.output_classes), float('nan'), device='cuda')
         for i in range(self.output_classes):
             predictions[:, i] = self.fc_layers[i](tab_token_output[:, i*self.token_size:(i+1)*self.token_size ]).squeeze()
 
-            #processed_feature = self.fc_layers[i](current_feature)
 
 
         
-        #predictions = self.classifier(tab_token_output) 
         
         return predictions
 
@@ -102,6 +99,7 @@ class FullyConnectedClassifier(nn.Module):
 
         return self.classifier(tokens)
 
+
 class TabularEncoder(nn.Module):
     def __init__(self, n_classes=12, token_size=10, out_dim=120):
         super(TabularEncoder, self).__init__()
@@ -117,23 +115,28 @@ class TabularEncoder(nn.Module):
         self.fc_layers = nn.ModuleList([nn.Linear(1, token_size) for _ in range(n_classes)])
 
 
-
     def forward(self, x):
         outputs = []
 
         for i in range(self.n_classes):
-            current_feature = x[:, i].unsqueeze(1)  # Select the i-th feature for all batch items
+            current_class_tab_values = x[:, i].unsqueeze(1)  # Select the i-th class for all batch items
 
             # Create a mask for NaN values
-            mask = torch.isnan(current_feature)
+            mask = torch.isnan(current_class_tab_values)
 
-            # Apply the fully connected layer to non-NaN values
-            processed_feature = self.fc_layers[i](current_feature)
+            #encoded_cls_tab_values = self.fc_layers[i](current_class_tab_values)
+            
+            #Only feeding non-NaN values to the fc layers
+            encoded_cls_tab_values_non_nan = self.fc_layers[i](current_class_tab_values[~mask].unsqueeze(1))
 
-            # Replace NaN values with the missing value token
-            current_feature_with_nan_replaced = torch.where(mask, self.missing_tab_value_token, processed_feature)
+            # Create 10 values of the output token; for each item in batch, it's either 
+            # the missing_tab_value_token  (if no tab data provided) 
+            # or the encoded tab values, which are written in the next step
+            encoded_cls_tab_values_no_data_token = torch.where(mask, self.missing_tab_value_token, float('nan'))
 
-            outputs.append(current_feature_with_nan_replaced)
+            encoded_cls_tab_values_no_data_token[~mask.squeeze()] = encoded_cls_tab_values_non_nan
+
+            outputs.append(encoded_cls_tab_values_no_data_token)
 
         result = torch.cat(outputs, dim=1)
 

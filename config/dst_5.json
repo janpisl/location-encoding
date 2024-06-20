@@ -11,7 +11,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420],
+        "seed": [421],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [1000],
@@ -98,9 +98,9 @@
     },
 
     "wandb": {
-        "log_to_wandb" : "False",
+        "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "18/6 dst 5, new split"
+        "group": ""
     }
 }

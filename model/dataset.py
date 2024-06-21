@@ -43,7 +43,6 @@ class DriverDataset(Dataset):
         self.img_dir = img_dir
         self.img_labels = annotations_file if isinstance(annotations_file, pd.DataFrame) else pd.read_csv(annotations_file)
         self.img_labels['geometry'] = gpd.GeoSeries.from_wkt(self.img_labels['geometry'])
-
         #Randomly swapping filenames 
         #print(" ----  Randomizing labels! ---- ")
         #self.img_labels['driver'] = self.img_labels[['driver']].sample(frac=1, random_state=1).reset_index(drop=True)
@@ -63,6 +62,11 @@ class DriverDataset(Dataset):
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type'] #Should be 'country_id' or 'token'
+            try:
+                self.tabular_dropout = kwargs['hyperparams']['tabular_encoder']['dropout']
+                assert self.img_labels.split.unique()[0] == 'train' #For validation/test, no dropout should be used
+            except (KeyError, AssertionError):
+                self.tabular_dropout = 0.
             try:
                 self.tabular_temporal_processing = kwargs['hyperparams']['tabular_encoder']['temporal_processing'] #Should be 'dynamic' or 'static'
             except KeyError:
@@ -164,6 +168,8 @@ class DriverDataset(Dataset):
         tabular_data[self.tabular_cls_indices] = torch.Tensor(rates.squeeze())
         #tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
         tabular_data = tabular_data.squeeze()
+        if self.tabular_dropout > 0:
+            tabular_data = set_nan_with_probability(tabular_data, self.tabular_dropout)
 
         return tabular_data
 
@@ -238,3 +244,15 @@ class DriverDataset(Dataset):
         inputs  = [image_data, loc, tabular_data, forestloss_data]
 
         return inputs, label
+
+
+
+
+
+
+
+
+def set_nan_with_probability(tensor, probability):
+    mask = torch.rand(tensor.shape) < probability
+    tensor[mask] = float('nan')
+    return tensor

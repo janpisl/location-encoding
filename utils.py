@@ -528,8 +528,10 @@ from evaluate import evaluate, compute_and_log_metrics
 import torch.nn as nn
 
 
-def load_model_and_predict(model_dict, n_classes, device, dataset='val'):
-    
+def load_model_and_predict(model_dict, n_classes, device, dataset='val', checkpoint='best'):
+
+    assert checkpoint in ['best', 'last'], f'Allowed values for checkpoint are best or last, got {checkpoint}'
+
     wandb_id = model_dict['wandb_id']
     model_dir = os.path.join('../models_trained', wandb_id)
     config_path = os.path.join(model_dir, 'config.json')
@@ -543,7 +545,7 @@ def load_model_and_predict(model_dict, n_classes, device, dataset='val'):
     model = MultiModalDriverClassifier(n_classes,  **config)
     model = model.to(device)
 
-    trained_weights = f'../models_trained/{wandb_id}/best.pt'
+    trained_weights = f'../models_trained/{wandb_id}/{checkpoint}.pt'
     _ = model.load_state_dict(torch.load(trained_weights)['state_dict'])
     _ = model.eval()
 

@@ -211,6 +211,8 @@ def fetch_dataloader(types, config):
             elif split == 'val' or split == 'test':
                 _transform = eval_transform
                 _shuffle = False   
+                
+
             else:
                 raise ValueError('Unknown split')
 

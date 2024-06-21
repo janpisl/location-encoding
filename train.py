@@ -136,9 +136,10 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         regul = False
     
     for epoch in range(epochs):
-
+        
         try:
-            if epochs_since_last_best > config['hyperparams']['image_encoder']['freezing_patience']:
+            if epoch == config['hyperparams']['image_encoder']['freeze_after']:
+            #if epochs_since_last_best > config['hyperparams']['image_encoder']['freezing_patience']:
                 # Freeze all layers except the last fully connected layer
                 for name, param in model.image_encoder.named_parameters():
                     if 'fc' not in name:
@@ -162,6 +163,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
         val_acc = val_metrics['accuracy']
         is_best = val_acc >= best_val_acc
+
+        wandb.log({'epoch' : epoch + 1})
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -262,20 +265,23 @@ def main(config):
     model = MultiModalDriverClassifier(n_classes,  **config)
     model = model.to(device)
 
-    '''
-    # Separate the parameters
-    img_enc = [param for name, param in model.image_encoder.named_parameters() if 'fc' not in name]
-    other_params = [param for name, param in model.named_parameters() if "image_encoder" not in name]
     
+    # Separate the parameters
+    img_enc = [param for name, param in model.image_encoder.named_parameters()]
+    other_params = [param for name, param in model.named_parameters() if "image_encoder" not in name]
+
+    #Check if the parameters are really as expected
+    _img_enc_lr = config['hyperparams']['image_encoder']['learning_rate']
+
     # Define the optimizer with two parameter groups
     optimizer = optim.Adam([
         {'params': other_params},
-        {'params': img_enc, 'lr': config['hyperparams']['learning_rate']/100}  
-    ], lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay']) '''
+        {'params': img_enc, 'lr': _img_enc_lr}  
+    ], lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
 
 
 
-    optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
+    #optimizer = optim.Adam(model.parameters(), lr=config['hyperparams']['learning_rate'], weight_decay=config['hyperparams']['weight_decay'])
 
     try:
         regularization = config['hyperparams']['two_model_regularization']['use']
@@ -317,14 +323,14 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    for variant in permutations_dicts:
+    '''for variant in permutations_dicts:
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)
+        main(config)'''
 
 
-    '''for i, variant in enumerate(permutations_dicts):
+    for i, variant in enumerate(permutations_dicts):
 
         try:
             config['hyperparams'] = variant
@@ -338,7 +344,7 @@ if __name__ == '__main__':
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
             with open(f"logs_{datetime.today().strftime('%m_%d')}.txt", "a") as sink:
-                sink.write(text)'''
+                sink.write(text)
 
 
 

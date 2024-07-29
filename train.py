@@ -62,8 +62,7 @@ def train(model, optimizer, loss_fn, dataloader, device, config, custom_regulari
 
         image_batch, loc_batch, expansion_rates_batch, forestloss_batch, labels_batch = train_batch[0].to(device), train_batch[1].to(device), train_batch[2].to(device), train_batch[3].to(device), labels_batch.to(device)
 
-
-        if custom_regularization:
+        if custom_regularization and model.use_tabular:
             #i need to filter  each item in the batch based on the indices of where the tab data was provided
             non_tab_indices = ~torch.isnan(expansion_rates_batch)
             with torch.no_grad():
@@ -151,20 +150,32 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             print(f'No improvement for {early_stopping_patience} epochs. Early stopping at epoch {epoch}')
             break
 
+
+        '''# Change the learning rate
+        if epoch in [10,20,30]:
+            for param_group in optimizer.param_groups:
+                if len(param_group['params']) == 82:
+                    param_group['lr'] = param_group['lr']/2
+                else:
+                    param_group['lr'] = param_group['lr']/4'''
+
+
+
         # compute number of batches in one epoch (one full pass over the training set)
         train(model, optimizer, loss_fn, train_dataloader, device, config, custom_regularization=regul)
 
 
         # Evaluate for one epoch on validation set
         if regul:
-            val_metrics = evaluate(model, torch.nn.functional.cross_entropy, val_dataloader, device, config)
+            val_metrics = evaluate(model, F.cross_entropy, val_dataloader, device, config)
         else:
             val_metrics = evaluate(model, loss_fn, val_dataloader, device, config)
 
         val_acc = val_metrics['accuracy']
         is_best = val_acc >= best_val_acc
 
-        wandb.log({'epoch' : epoch + 1})
+        if config['wandb']['log_to_wandb']:
+            wandb.log({'epoch' : epoch + 1})
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -194,20 +205,22 @@ def initialize_wandb(config, model, train_dl, val_dl):
 
         if config['hyperparams']['tabular_encoder']['use'] is True:
             tab_enc_name = config['hyperparams']['tabular_encoder']['type']
-            tab_dataset = config['hyperparams']['tabular_encoder']['dataset']
+            #tab_dataset = config['hyperparams']['tabular_encoder']['dataset']
+            tab_dropout = config['hyperparams']['tabular_encoder']['dropout']
         else:
             tab_enc_name = "no"
+            tab_dropout = ''
 
         train_split = [int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'train' ]
         val_split = [int(key) for key,value in config['hyperparams']['folds_to_split']['mapping'].items() if value == 'val' ]
 
         try:
-            freeze_after = f"freeze patience {config['hyperparams']['image_encoder']['freezing_patience']}" 
+            freeze_after = f"freeze after {config['hyperparams']['image_encoder']['freeze_after']}" 
         except KeyError:
             freeze_after = ' ? freeze'
 
         name = f""" {config['hyperparams']['train_examples_per_class']} ex per class;
-            {config['hyperparams']['image_encoder']['use']} ({config['n_images']}) img, {freeze_after}; {loc_enc_name} loc;  {tab_enc_name} {tab_dataset if tab_enc_name != 'no' else ''} tabular; 
+            {config['hyperparams']['image_encoder']['use']} ({config['n_images']}) img, {freeze_after}; {loc_enc_name} loc;  {tab_enc_name}  tabular, dropout {tab_dropout}; 
             train {train_split}
             val {val_split}"""
     except:
@@ -258,8 +271,8 @@ def main(config):
     )
     
     config['n_images'] = num_images
-    if 'freeze_after' in config['hyperparams']['image_encoder'].keys():
-        print('Old configuration for img freezing')
+    #if 'freeze_after' in config['hyperparams']['image_encoder'].keys():
+    #    print('Old configuration for img freezing')
 
     # Define the model and optimizer
     model = MultiModalDriverClassifier(n_classes,  **config)
@@ -289,6 +302,7 @@ def main(config):
         regularization = False
 
     if regularization:
+        assert config['hyperparams']['tabular_encoder']['use'], "Tabular data needed for two-model regularization"
         loss_fn = TabRegularizationLoss(temperature=config['hyperparams']['two_model_regularization']['temperature'], regularization_method=config['hyperparams']['two_model_regularization']['metric'])
     else:
        loss_fn = nn.CrossEntropyLoss(reduction='mean')
@@ -323,19 +337,29 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
+        
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)'''
+        main(config)
 
 
-    for i, variant in enumerate(permutations_dicts):
-
+    #skip = True
+    '''for i, variant in enumerate(permutations_dicts):
+        
+        #if variant['seed'] == 421 and variant['train_examples_per_class'] == 1000 and variant['model_version'] == 'v1' and variant['tabular_encoder']['use'] == 'True' and variant['folds_to_split']['mapping']['0'] == 'val':
+        #    skip = False
+        #    print(i)
+        #if skip:
+        #    continue
+        #    
         try:
+            
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
             config = utils.parse_boolean_recursion(config)
+
             try:
                 wandb.finish()
             except:
@@ -344,7 +368,7 @@ if __name__ == '__main__':
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
             with open(f"logs_{datetime.today().strftime('%m_%d')}.txt", "a") as sink:
-                sink.write(text)
+                sink.write(text)'''
 
 
 

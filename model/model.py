@@ -72,14 +72,17 @@ def get_classifier(output_classes, config):
         object inheriting from nn.Module: classifier of input tokens
     """
 
-    model_type = config['hyperparams']['classifier']['type']
+    classifier_type = config['hyperparams']['classifier']['type']
+    model_version = config['hyperparams']['model_version']
 
-    if model_type == 'fc':
+    if classifier_type == 'fc':
         input_size = _get_feature_vector_size(config)
         classifier = FullyConnectedClassifier(output_classes, input_dimension=input_size)
-    elif model_type == 'transformer':
-        classifier = TransformerClassifier(output_classes, **config)
-
+    elif classifier_type == 'transformer':
+        if model_version == 'v1':
+            classifier = TransformerClassifier(output_classes, **config)
+        elif model_version == 'v2':
+            classifier = TransformerClassifierV2(output_classes, **config) 
     return classifier
 
 

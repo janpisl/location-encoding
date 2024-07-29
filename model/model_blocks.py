@@ -55,12 +55,13 @@ class TransformerClassifier(nn.Module):
 
     
 
-
 class TransformerClassifierV2(TransformerClassifier):
     def __init__(self, output_classes, token_size=10, **config):
-        super(TransformerClassifierV2, self).__init__()
+        super(TransformerClassifierV2, self).__init__(output_classes, **config)
 
+        self.output_classes = output_classes
         self.classifier = None        
+        self.token_size = token_size
         self.fc_layers = nn.ModuleList([nn.Linear(token_size, 1) for _ in range(output_classes)])
 
         
@@ -89,6 +90,44 @@ class TransformerClassifierV2(TransformerClassifier):
         return predictions
 
 
+
+class TransformerClassifierV3(TransformerClassifier):
+    def __init__(self, output_classes, token_size=10, **config):
+        super(TransformerClassifierV3, self).__init__()
+
+
+        self.embedding_dim = config['hyperparams']['embedding_dim']
+        self.classifier = nn.Linear(self.embedding_dim+token_size, out_features=output_classes, bias = True)
+
+        
+    def forward(self, tokens):
+        """_summary_
+
+        Args:
+            tokens (list): set of tokens, each item in list is either a single token of shape BxD (batch, embedding_dim),
+                            or a group of tokens (shape NxBxD)
+
+        """
+
+        #Make cls_token tensor in shape (1,B,D)
+        cls_tokens = self.cls_token.repeat(tokens.shape[1],1).unsqueeze(dim=0)
+
+        features = torch.cat([cls_tokens, tokens])
+        encoded_tokens = self.transformer_enc(features)
+        #The last token is the TAB token - given by the order in which they are appended in model.forward
+        cls_token_output, tab_token_output = encoded_tokens[0], encoded_tokens[-1]
+        
+        batch = tab_token_output.shape[0]
+
+        predictions = torch.full((batch, self.output_classes), float('nan'), device='cuda')
+
+        for i in range(self.output_classes):
+            pdb.set_trace()
+            #Output token created by concat'ing the cls token with the section of the tab token for given class
+            output_token = torch.cat(cls_token_output, tab_token_output[:, i*self.token_size:(i+1)*self.token_size ], dim=1)
+            predictions[:, i] = self.classifier(output_token)
+                            
+        return predictions
 
 
 class TabularEncoder(nn.Module):

@@ -151,19 +151,9 @@ class MultiModalDriverClassifier(nn.Module):
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             if self.tabular_processing == 'token':
-                if self.model_version == 'v1':
-                    self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
-                    try:
-                        learn_missing_value = kwargs['hyperparams']['tabular_encoder']['learn_missing_value']
-                    except KeyError:
-                        learn_missing_value = True
-                    if learn_missing_value:
-                        self.missing_tab_value_token = nn.Parameter(torch.zeros(1))
-                        torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
-                    else:
-                        self.missing_tab_value_token = 0.
-                elif self.model_version == 'v2':
-                    self.tabular_encoder = TabularEncoder(out_dim=self.embedding_dim)
+                self.tabular_encoder = TabularEncoder(out_dim=self.embedding_dim)
+
+                    
     
     def forward(self, image_data, location, tabular_data, forestloss_patch=None):
         
@@ -178,16 +168,7 @@ class MultiModalDriverClassifier(nn.Module):
             features.append(loc_features)
 
         if self.use_tabular:
-            if self.model_version == "v1":
-                if self.tabular_processing == 'token':
-                    tabular_data[torch.isnan(tabular_data)] = self.missing_tab_value_token
-                    tabular_data = self.tabular_encoder(tabular_data)
-                elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
-                    tabular_data = tabular_data.unsqueeze(1)
-                    tabular_data = tabular_data.repeat(1, self.embedding_dim)
-            elif self.model_version == 'v2':
-                tabular_data = self.tabular_encoder(tabular_data)
-
+            tabular_data = self.tabular_encoder(tabular_data)
             features.append(tabular_data)
 
         predictions = self.classifier(features)

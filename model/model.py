@@ -83,6 +83,9 @@ def get_classifier(output_classes, config):
             classifier = TransformerClassifier(output_classes, **config)
         elif model_version == 'v2':
             classifier = TransformerClassifierV2(output_classes, **config) 
+        elif model_version == 'v3':
+            classifier = TransformerClassifierV3(output_classes, **config) 
+
     return classifier
 
 

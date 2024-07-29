@@ -135,7 +135,6 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         regul = False
     
     for epoch in range(epochs):
-        
         try:
             if epoch == config['hyperparams']['image_encoder']['freeze_after']:
             #if epochs_since_last_best > config['hyperparams']['image_encoder']['freezing_patience']:

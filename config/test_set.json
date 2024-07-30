@@ -67,14 +67,6 @@
         "tabular_encoder": [
 
             {
-                "use" : "False",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic",
-                "dropout" : 0.2
-
-            },
-            {
                 "use" : "True",
                 "dataset" : "deduce",
                 "type" : "token",
@@ -127,7 +119,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "26/7 eval on test set"
+        "group": "29/7 model v1 with TabularEncoder"
     }
 }
 

@@ -119,7 +119,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "29/7 model v3"
+        "group": "29/7 model v1 with TabularEncoder"
     }
 }
 

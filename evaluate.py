@@ -56,7 +56,7 @@ def evaluate(model, loss_fn, dataloader, device, config, return_preds_and_target
     return metrics
 
 
-def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=None, conf_matrix=True):
+def compute_and_log_metrics(targets, preds, dataset_name, log_to_wandb, losses=None, conf_matrix=False):
 
     if conf_matrix:
         conf_matrix_file_path = write_confusion_matrix(targets, preds, labels=CLASS_INDICES,target_names=CLASS_NAMES)

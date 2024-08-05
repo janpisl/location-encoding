@@ -41,7 +41,7 @@ class TransformerClassifier(nn.Module):
 
         """
         #Get all tokens in shape NxBxD and concat them together into a tensor of NxBxD (num_tokens, batch, embed_dim)
-        tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in tokens], dim=0)
+        #tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in tokens], dim=0)
 
         #Make cls_token tensor in shape (1,B,D)
         cls_tokens = self.cls_token.repeat(tokens.shape[1],1).unsqueeze(dim=0)

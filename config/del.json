@@ -2,8 +2,8 @@
     
 
     "data": {
-        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/four_images",
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split_no_masolele.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/one_image",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v5",
         "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
         "output_folder":  "models_trained/"
@@ -11,7 +11,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420, 421, 422, 423, 425],
+        "seed": [420],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [50],
@@ -20,18 +20,17 @@
         "in_channels": [4],
         "use_forestloss" : ["True"],
         "early_stopping_patience": [50],
+        "token_dropout" : [0],
+        "train_dataset_total_size": [15000],
 
-        "model_version": ["v3"],
+        "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [20, 50, 100, 200, 500, 1000, 3000],
 
         "two_model_regularization"  : [
                  
             {
-                "use" : "False",
-                "temperature": 0,
-                "metric" : "cosine_similarity"
+                "use" : "False"
 
             }
         ],
@@ -57,8 +56,7 @@
         "loc_encoder": [
 
             {
-                "use" : "True",
-                "positional_embedding": "cartesian3d"
+                "use" : "False"
             }
 
 
@@ -67,13 +65,13 @@
         "tabular_encoder": [
 
             {
-                "use" : "True",
+                "use" : "False",
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic",
                 "dropout" : 0.2
 
-            }         
+            }      
             
 
         ],
@@ -116,10 +114,10 @@
     },
 
     "wandb": {
-        "log_to_wandb" : "True",
+        "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "29/7 model v1 with TabularEncoder"
+        "group": "30/7 test set four images"
     }
 }
 

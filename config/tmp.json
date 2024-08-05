@@ -2,12 +2,10 @@
     
 
     "data": {
-        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v4/labels_55k.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v4/55k/SR_four_images",
-        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v4",
-        "faostat_data": "/home/jan/Documents/EPFL/project_2/data/tabular/faostat_2000_2020_dynamic.csv",
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split_no_masolele.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/four_images",
+        "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v5",
         "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
-        "goldman_data": "/home/jan/Documents/EPFL/project_2/data/tabular/goldman.csv",
         "output_folder":  "models_trained/"
     },
     "num_workers" : 32,
@@ -16,15 +14,27 @@
         "seed": [420],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1000],
+        "epochs": [50],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [40],
+        "early_stopping_patience": [50],
+
+        "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [500],
+        "train_examples_per_class" : [100, 200],
+
+        "two_model_regularization"  : [
+                 
+            {
+                "use" : "False",
+                "temperature": 0,
+                "metric" : "cosine_similarity"
+
+            }
+        ],
         
 
         "image_encoder": [
@@ -36,34 +46,35 @@
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
                 "moco_weights" : "False",
-                "freeze_after": 6
+                "freeze_after": 30,
+                "learning_rate": 0.001
             }
+
+
 
         ],
 
         "loc_encoder": [
+
             {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
             }
 
+
         ],   
 
         "tabular_encoder": [
-            {
-                "use" : "False",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic"
 
-            },
             {
                 "use" : "True",
                 "dataset" : "deduce",
                 "type" : "token",
-                "temporal_processing" : "dynamic"
+                "temporal_processing" : "dynamic",
+                "dropout" : 0.2
 
-            }            
+            }         
+            
 
         ],
 
@@ -80,7 +91,7 @@
         "folds_to_split" : [
 
             {
-                "column" : "split_5",
+                "column" : "split",
                 "mapping"  : {
                     "0" : "train",
                     "1" : "train",
@@ -89,7 +100,6 @@
                     "4" : "val"
                 }
             }
-
 
 
         ],
@@ -106,9 +116,10 @@
     },
 
     "wandb": {
-        "log_to_wandb" : "True",
+        "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": ""
+        "group": "30/7 data without masolele"
     }
 }
+

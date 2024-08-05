@@ -169,7 +169,7 @@ class MultiModalDriverClassifier(nn.Module):
                     self.tabular_encoder = TabularEncoder(out_dim=self.embedding_dim)
                     
     
-    def forward(self, image_data, location, tabular_data, forestloss_patch=None):
+    def forward(self, image_data, location, tabular_data, forestloss_patch=None, dropout=0.):
         
         if self.use_image:
             image_features = self.image_encoder(image_data, forestloss_patch)
@@ -182,9 +182,24 @@ class MultiModalDriverClassifier(nn.Module):
             features.append(loc_features)
 
         if self.use_tabular:
-            tabular_data = self.tabular_encoder(tabular_data)
+            if self.model_version == "v1":
+                if self.tabular_processing == 'token':
+                    tabular_data[torch.isnan(tabular_data)] = self.missing_tab_value_token
+                    tabular_data = self.tabular_encoder(tabular_data)
+                elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
+                    tabular_data = tabular_data.unsqueeze(1)
+                    tabular_data = tabular_data.repeat(1, self.embedding_dim)
+            elif self.model_version == 'v2':
+                tabular_data = self.tabular_encoder(tabular_data)
             features.append(tabular_data)
 
-        predictions = self.classifier(features)
+        #Get all tokens in shape NxBxD and concat them together into a tensor of NxBxD (num_tokens, batch, embed_dim)
+        tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in features], dim=0)
+        
+        mask = torch.rand(tokens.size(0)) > dropout
+        tokens = tokens[mask]
+
+        predictions = self.classifier(tokens)
+
 
         return predictions

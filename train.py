@@ -57,6 +57,8 @@ def train(model, optimizer, loss_fn, dataloader, device, config, custom_regulari
     preds_batches = []
     targets_batches = []
 
+    dropout = config['hyperparams']['token_dropout']
+
 
     for train_batch, labels_batch in dataloader:
 
@@ -68,12 +70,12 @@ def train(model, optimizer, loss_fn, dataloader, device, config, custom_regulari
             with torch.no_grad():
                 expansion_rates_batch_aux = expansion_rates_batch.clone()
                 expansion_rates_batch_aux.fill_(float('nan'))
-                y_hat_aux = model(image_batch, loc_batch, expansion_rates_batch_aux, forestloss_batch)
+                y_hat_aux = model(image_batch, loc_batch, expansion_rates_batch_aux, forestloss_batch,dropout=dropout)
 
-            y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)        
+            y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch, dropout=dropout)        
             loss = loss_fn(y_hat_aux, y_hat, labels_batch, non_tab_indices)
         else:
-            y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch)
+            y_hat = model(image_batch, loc_batch, expansion_rates_batch, forestloss_batch, dropout=dropout)
             loss = loss_fn(y_hat, labels_batch)
 
         optimizer.zero_grad()

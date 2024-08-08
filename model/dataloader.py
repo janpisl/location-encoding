@@ -206,8 +206,8 @@ def fetch_dataloader(types, config):
                     annotation = sample_rows(annotation.loc[annotation.split == split].reset_index(drop=True), 'driver', examples_per_class)
                 except KeyError:
                     pass
-                #Do not sample by examples_per_class, but just by the size of the train dataset - for figures
-                try:
+                
+                '''try:
                     total_size = config['hyperparams']['train_dataset_total_size']
                     examples_per_class = int(total_size/len(annotation.loc[annotation.split == split].driver.unique()))
                     train_df = annotation.loc[annotation.split == split].reset_index(drop=True)
@@ -216,8 +216,14 @@ def fetch_dataloader(types, config):
                         random_samples = train_df.loc[~train_df.sampleid.isin(annotation.sampleid)].sample((total_size - len(annotation)))
                         annotation = pd.concat([annotation, random_samples])
                 except KeyError:
-                    pass                
-
+                    pass      '''          
+                #Do not sample by examples_per_class, but just by the size of the train dataset - for figures
+                #Ensure that smaller size datasets are subsets of larger
+                try:
+                    total_size = config['hyperparams']['train_dataset_total_size']
+                    annotation = annotation.loc[annotation.dst_size <= total_size]
+                except KeyError:
+                    pass
 
             elif split == 'val' or split == 'test':
                 _transform = eval_transform

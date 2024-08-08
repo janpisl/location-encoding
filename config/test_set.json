@@ -26,7 +26,7 @@
 
         "embedding_dim" : [128],
         "train_examples_per_class" : [20, 50, 100, 200, 500, 1000, 3000],
-
+        "train_dataset_total_size" : [1000],
         "two_model_regularization"  : [
                  
             {
@@ -130,7 +130,7 @@
         "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "30/7 test set four images"
+        "group": "5/8 test set one image"
     }
 }
 

@@ -19,6 +19,9 @@ class LocationEncoder(nn.Module):
             self.pe = Cartesian3D()
         elif  positional_embedding == 'wrap':
             self.pe = Wrap()
+        elif  positional_embedding == 'theory':
+            self.pe = Theory() 
+        
         else:
             raise ValueError(f"Unrecognized PE() method: {positional_embedding}")
         

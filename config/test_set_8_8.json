@@ -21,18 +21,14 @@
         "use_forestloss" : ["True"],
         "early_stopping_patience": [50],
         "token_dropout" : [0],
+        "two_model_regularization"  : [ { "use" : "False"} ],
 
         "model_version": ["v1"],
 
         "embedding_dim" : [128],
         "train_dataset_total_size" : [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
-        "two_model_regularization"  : [
-                 
-            {
-                "use" : "False"
-
-            }
-        ],
+        
+        
         
 
         "image_encoder": [
@@ -137,7 +133,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "8/8 test set one image"
+        "group": "9/8 test set four images"
     }
 }
 

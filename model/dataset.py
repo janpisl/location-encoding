@@ -54,9 +54,8 @@ class DriverDataset(Dataset):
         self.use_image = kwargs['hyperparams']['image_encoder']['use']
 
         self.use_forestloss = kwargs['hyperparams']['use_forestloss']
-        if self.use_forestloss:
-            self.forestloss_dir = kwargs['data']['forestloss_folder']
-            self.forestloss_transform = kwargs['forestloss_transform']
+        self.forestloss_dir = kwargs['data']['forestloss_folder']
+        self.forestloss_transform = kwargs['forestloss_transform']
 
 
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
@@ -215,9 +214,10 @@ class DriverDataset(Dataset):
 
 
     def __getitem__(self, idx):
-
-        image_data = self.load_images(idx)  
-
+        try:
+            image_data = self.load_images(idx)  
+        except:
+            print(self.img_labels.iloc[idx])
         class_name = self.img_labels.driver.iloc[idx]
         label = LABEL_MAPPING[class_name]
 
@@ -231,14 +231,14 @@ class DriverDataset(Dataset):
             label = self.target_transform(label)    
         
         forestloss_data = Tensor([0]) # In case it is not used, return something valid to avoid dataloader crashing
-        #Load forestloss patch if applicable
+        #Load forestloss patch  
+        sampleid = str(self.img_labels.iloc[idx]['sampleid'])
+        path = os.path.join(self.forestloss_dir, f'{sampleid}.tif')
+        with rasterio.open(path) as src:
+            forestloss_data = Tensor(src.read())
+            forestloss_original  = forestloss_data.detach().clone() #I need the forestloss data pre-transform to get the minimum and maximum forest loss years
         if self.use_forestloss:
-            sampleid = str(self.img_labels.iloc[idx]['sampleid'])
-            path = os.path.join(self.forestloss_dir, f'{sampleid}.tif')
-            with rasterio.open(path) as src:
-                forestloss_data = Tensor(src.read())
-                forestloss_original  = forestloss_data.detach().clone() #I need the forestloss data pre-transform to get the minimum and maximum forest loss years
-                forestloss_data = self.forestloss_transform(forestloss_data)
+            forestloss_data = self.forestloss_transform(forestloss_data)
         
         tabular_data = self._get_commodity_data(idx, forestloss_original)
         inputs  = [image_data, loc, tabular_data, forestloss_data]

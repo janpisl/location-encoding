@@ -242,7 +242,7 @@ class TemporalWrapper(nn.Module):
 
         self.model = model
         
-    def forward(self, x, forestloss):
+    def forward(self, x, forestloss=None):
         """_summary_
 
         Args:

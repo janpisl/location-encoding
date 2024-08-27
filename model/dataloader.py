@@ -57,6 +57,8 @@ class ConditionalTransform(Module):
 
     def __call__(self, x):
         # Check if all elements in x are 1 
+        if torch.all(x == 0): #In case it's all 0s, turn it to 1s (otherwise i multiply feature maps with only 0s -> lose all signal)
+            x.fill_(1)
         if torch.all(x == 1):
             # Return original tensor without applying the transform
             return x

@@ -52,28 +52,12 @@
         ],
 
         "loc_encoder": [
-            
-            {
-                "use" : "True",
-                "type": "siren",
-                "num_layers" : 1
-            },
+
             {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
-            },
-            {
-                "use" : "True",
-                "positional_embedding": "direct"
-            },
-            {
-                "use" : "True",
-                "positional_embedding": "wrap"
-            },
-            {
-                "use" : "True",
-                "positional_embedding": "theo"
-            }           
+
+            }       
 
 
 

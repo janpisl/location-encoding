@@ -139,6 +139,7 @@ class MultiModalDriverClassifier(nn.Module):
         except KeyError:
             self.model_version = 'v1'
 
+        self.use_forestloss = kwargs['hyperparams']['use_forestloss']
         self.embedding_dim = kwargs['hyperparams']['embedding_dim']
         self.classifier = get_classifier(output_classes, kwargs)
 
@@ -172,7 +173,10 @@ class MultiModalDriverClassifier(nn.Module):
     def forward(self, image_data, location, tabular_data, forestloss_patch=None, dropout=0.):
         
         if self.use_image:
-            image_features = self.image_encoder(image_data, forestloss_patch)
+            if self.use_forestloss:
+                image_features = self.image_encoder(image_data, forestloss_patch)
+            else:
+                image_features = self.image_encoder(image_data, None)
             features = [image_features]
         else:
             features = []

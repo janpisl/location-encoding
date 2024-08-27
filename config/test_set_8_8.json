@@ -11,7 +11,7 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420, 421, 422, 423, 424],
+        "seed": [420, 422, 423, 424, 425],
         "batch_size": [64],
         "learning_rate": [0.0005],
         "epochs": [50],
@@ -26,22 +26,13 @@
         "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_dataset_total_size" : [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
+        "train_dataset_total_size" : [200, 1000],
         
         
         
 
         "image_encoder": [
 
-            {
-                "use" : "False",
-                "type" : "cnn",
-                "backbone": "resnet18",
-                "pretrained_backbone" : "True",
-                "moco_weights" : "False",
-                "freeze_after": 30,
-                "learning_rate": 0.001
-            },
             {
                 "use" : "True",
                 "type" : "cnn",
@@ -59,9 +50,6 @@
         "loc_encoder": [
 
             {
-                "use" : "False"
-            },
-            {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
             }
@@ -72,14 +60,7 @@
 
         "tabular_encoder": [
 
-            {
-                "use" : "False",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic",
-                "dropout" : 0.2
 
-            },
             {
                 "use" : "True",
                 "dataset" : "deduce",
@@ -133,7 +114,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "9/8 test set four images"
+        "group": "27/8 test"
     }
 }
 

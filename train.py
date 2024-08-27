@@ -344,6 +344,7 @@ if __name__ == '__main__':
         main(config)
 
     #skip = True
+    
     '''for i, variant in enumerate(permutations_dicts):
         
         #if variant['seed'] == 421 and variant['train_examples_per_class'] == 1000 and variant['model_version'] == 'v1' and variant['tabular_encoder']['use'] == 'True' and variant['folds_to_split']['mapping']['0'] == 'val':

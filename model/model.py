@@ -156,7 +156,7 @@ class MultiModalDriverClassifier(nn.Module):
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             if self.tabular_processing == 'token':
                 if self.model_version == 'v1':
-                    self.tabular_encoder = nn.Linear(12, out_features=self.embedding_dim, bias = True)
+                    self.tabular_encoder = nn.Linear(11, out_features=self.embedding_dim, bias = True)
                     try:
                         learn_missing_value = kwargs['hyperparams']['tabular_encoder']['learn_missing_value']
                     except KeyError:

@@ -23,9 +23,8 @@ LABEL_MAPPING = {
     'urban': 6,
     'cocoa': 7,
     'rubber': 8,
-    'forest regrowth': 9,
-    'shifting agriculture': 10,
-    'other': 11 
+    'shifting agriculture': 9,
+    'other': 10 
 }
 
 FOREST_LOSS_YEAR_RANGE = 2000, 2020
@@ -162,8 +161,8 @@ class DriverDataset(Dataset):
                     rates = np.nanmean(rates, axis=0)'''
 
 
-        # Create a tensor of size 12, fill with values at the corresponding indices
-        tabular_data = torch.full((12,), fill_value=float('nan')) 
+        # Create a tensor of size 11, fill with values at the corresponding indices
+        tabular_data = torch.full((11,), fill_value=float('nan')) 
         tabular_data[self.tabular_cls_indices] = torch.Tensor(rates.squeeze())
         #tabular_data = torch.nan_to_num(tabular_data, nan=0.0)
         tabular_data = tabular_data.squeeze()

@@ -180,7 +180,7 @@ class TransformerClassifierV3(TransformerClassifier):
 
 
 class TabularEncoder(nn.Module):
-    def __init__(self, n_classes=12, out_dim=120):
+    def __init__(self, n_classes=11, out_dim=120):
         super(TabularEncoder, self).__init__()
         
         #assert n_classes*token_size == out_dim #Doesn't have to be true, but then some parameters are wasted

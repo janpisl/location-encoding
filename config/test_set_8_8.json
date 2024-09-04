@@ -3,7 +3,7 @@
 
     "data": {
         "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split_no_masolele.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/four_images",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/three_images",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v5",
         "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
         "output_folder":  "models_trained/"
@@ -26,7 +26,8 @@
         "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_dataset_total_size" : [200, 1000],
+        "train_dataset_total_size" : [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
+        "n_images" : [3],
         
         
         
@@ -114,7 +115,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "27/8 test"
+        "group": "3/9 compare n_images"
     }
 }
 

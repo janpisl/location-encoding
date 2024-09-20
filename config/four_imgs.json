@@ -2,8 +2,8 @@
     
 
     "data": {
-        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split_no_masolele.csv",
-        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/twelve_images",
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_no_regrowth.csv",
+        "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/four_images",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v5",
         "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
         "output_folder":  "models_trained/"
@@ -11,10 +11,10 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420],
+        "seed": [420, 422, 423, 424, 425],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1000],
+        "epochs": [50],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
@@ -26,7 +26,8 @@
         "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_dataset_total_size" : [500],
+        "train_dataset_total_size" : [200, 500, 1000, 2000, 5000, 10000],
+        "n_images" : [4],
         
         
         
@@ -40,7 +41,7 @@
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
                 "moco_weights" : "False",
-                "freeze_after": 100,
+                "freeze_after": 30,
                 "learning_rate": 0.001
             }
 
@@ -50,12 +51,11 @@
 
         "loc_encoder": [
 
-            {
-                "use" : "False"
-            },
+
+
             {
                 "use" : "True",
-                "positional_embedding": "cartesian3d"
+                "positional_embedding": "wrap"
             }
 
 
@@ -65,21 +65,13 @@
         "tabular_encoder": [
 
             {
-                "use" : "False",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic",
-                "dropout" : 0.2
-
-            },
-            {
                 "use" : "True",
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic",
                 "dropout" : 0.2
 
-            }         
+            }      
             
 
         ],
@@ -125,7 +117,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "12 images test"
+        "group": "13/9 n images "
     }
 }
 

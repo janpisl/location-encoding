@@ -2,7 +2,7 @@
     
 
     "data": {
-        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split.csv",
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_no_regrowth.csv",
         "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/four_images",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v5",
         "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
@@ -11,30 +11,25 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420],
+        "seed": [420, 422, 423, 424, 425],
         "batch_size": [64],
-        "learning_rate": [0.001],
-        "epochs": [1000],
+        "learning_rate": [0.0005],
+        "epochs": [50],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
         "early_stopping_patience": [50],
+        "token_dropout" : [0],
+        "two_model_regularization"  : [ { "use" : "False"} ],
 
         "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [500],
-
-        "two_model_regularization"  : [
-
-            {
-                "use" : "False",
-                "temperature": 0,
-                "metric" : "cosine_similarity"
-
-            }         
-        ],
+        "train_dataset_total_size" : [10000],
+        "n_images" : [4],
+        
+        
         
 
         "image_encoder": [
@@ -46,8 +41,8 @@
                 "backbone": "resnet18",
                 "pretrained_backbone" : "True",
                 "moco_weights" : "False",
-                "freezing_patience": 1000,
-                "learning_rate": 0.002
+                "freeze_after": 30,
+                "learning_rate": 0.001
             }
 
 
@@ -58,14 +53,71 @@
 
             {
                 "use" : "True",
-                "positional_embedding": "cartesian3d"
-            }
+                "positional_embedding": "direct",
+                "nn" : "fcnet"
+            },
+            {
+                "use" : "True",
+                "positional_embedding": "direct",
+                "nn" : "linear"
+            },
 
+            {
+                "use" : "True",
+                "positional_embedding": "wrap",
+                "nn" : "fcnet"
+            },
+            {
+                "use" : "True",
+                "positional_embedding": "wrap",
+                "nn" : "linear"
+            },
+
+
+            {
+                "use" : "True",
+                "positional_embedding": "cartesian3d",
+                "nn" : "fcnet"
+            },
+            {
+                "use" : "True",
+                "positional_embedding": "cartesian3d",
+                "nn" : "linear"
+            },
+
+            {
+                "use" : "True",
+                "positional_embedding": "theory",
+                "nn" : "fcnet"
+            },
+            {
+                "use" : "True",
+                "positional_embedding": "theory",
+                "nn" : "linear"
+            },
+            
+            {
+                "use" : "True",
+                "type" : "siren",
+                "num_layers" : 1
+
+            },
+            {
+                "use" : "True",
+                "type" : "siren",
+                "num_layers" : 2
+
+            },          
+            {
+                "use" : "True",
+                "type" : "siren",
+                "num_layers" : 3
+
+            }
 
         ],   
 
         "tabular_encoder": [
-
 
             {
                 "use" : "True",
@@ -74,7 +126,9 @@
                 "temporal_processing" : "dynamic",
                 "dropout" : 0.2
 
-            }
+            }      
+            
+
         ],
 
         
@@ -88,7 +142,6 @@
         ],
 
         "folds_to_split" : [
-
 
             {
                 "column" : "split",
@@ -119,6 +172,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "test"
+        "group": "12/9 loc encoders all modalities"
     }
 }
+

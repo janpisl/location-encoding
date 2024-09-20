@@ -603,7 +603,6 @@ if __name__ == '__main__':
         'soy_south_america',
         'mapbiomas_peru',
         'mapbiomas_venezuela',
-
         ]
 
 

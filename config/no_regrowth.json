@@ -26,7 +26,7 @@
         "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_dataset_total_size" : [100, 200, 500, 1000, 2000, 5000, 10000, 20000],
+        "train_dataset_total_size" : [200, 500, 1000, 2000, 5000, 10000, 20000],
         "n_images" : [4],
         
         
@@ -34,6 +34,15 @@
 
         "image_encoder": [
 
+            {
+                "use" : "False",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze_after": 30,
+                "learning_rate": 0.001
+            },
             {
                 "use" : "True",
                 "type" : "cnn",
@@ -50,6 +59,11 @@
 
         "loc_encoder": [
 
+
+            {
+                "use" : "False",
+                "positional_embedding": "cartesian3d"
+            },
             {
                 "use" : "True",
                 "positional_embedding": "cartesian3d"
@@ -61,7 +75,14 @@
 
         "tabular_encoder": [
 
+            {
+                "use" : "False",
+                "dataset" : "deduce",
+                "type" : "token",
+                "temporal_processing" : "dynamic",
+                "dropout" : 0.2
 
+            }   , 
             {
                 "use" : "True",
                 "dataset" : "deduce",
@@ -115,7 +136,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "4/9 no regrowth"
+        "group": "4/9 no regrowth v4"
     }
 }
 

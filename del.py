@@ -24,7 +24,9 @@ def sample_rows(df, column, n_rows):
 import pdb
 
 
-annotation = pd.read_csv("/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split_no_masolele.csv")
+annotation = pd.read_csv("/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_no_regrowth.csv")
+pdb.set_trace()
+
 annotation['dst_size'] = None
 
 total_size = [100, 200, 500, 1000, 2000, 5000, 10000, 20000]

@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import math
 
 from model.positional_embeddings import *
+from model.siren import SirenNet
 
 class LocationEncoder(nn.Module):
     def __init__(self, positional_embedding, output_classes=None, feat_extractor_only=False, **kwargs):
@@ -38,6 +39,18 @@ class LocationEncoder(nn.Module):
             self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=kwargs['hyperparams']['embedding_dim'], feat_extractor_only=feat_extractor_only)
         elif nn_type == 'linear':
             self.nn = nn.Linear(self.pe.embedding_dim, kwargs['hyperparams']['embedding_dim'])
+        elif nn_type == 'siren':
+            assert 'num_layers' in kwargs['hyperparams']['loc_encoder'].keys(), 'Must specify number of layers for SIREN'
+            self.nn = SirenNet(
+                dim_in=self.pe.embedding_dim, # it is 2 (lat,lon) because i don't use any PE()
+                dim_hidden=kwargs['hyperparams']['embedding_dim'],
+                num_layers=kwargs['hyperparams']['loc_encoder']['num_layers'],
+                dim_out=kwargs['hyperparams']['embedding_dim'],
+                dropout=False,
+                degreeinput=True
+            )
+        else:
+            raise ValueError(f"Unrecognized loc encoder nn type: '{nn_type}'")
 
 
     def forward(self, x):

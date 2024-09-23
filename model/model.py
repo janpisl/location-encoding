@@ -6,7 +6,6 @@ import torch
 from model.model_blocks import *
 from model.loc_encoder import LocationEncoder
 from model.legacy_models import CNN_Att_LSTM
-from model.siren import SirenNet
 
 def get_image_encoder(config):
     """Get image encoder that takes in input in shape BxTxCxWxH or BxCxWxH 
@@ -36,6 +35,13 @@ def get_image_encoder(config):
 
 def get_loc_encoder(config):
 
+
+    return LocationEncoder(positional_embedding=config['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **config)
+        
+
+
+def OLD_get_loc_encoder(config):
+
     loc_enc_config = config['hyperparams']['loc_encoder']
 
     try:
@@ -56,8 +62,6 @@ def get_loc_encoder(config):
             )
     elif _type == 'fc':
         return LocationEncoder(positional_embedding=config['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **config)
-
-
 
 
 

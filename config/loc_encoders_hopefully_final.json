@@ -54,65 +54,20 @@
             {
                 "use" : "True",
                 "positional_embedding": "direct",
-                "nn" : "fcnet"
-            },
-            {
-                "use" : "True",
-                "positional_embedding": "direct",
-                "nn" : "linear"
-            },
-
-            {
-                "use" : "True",
-                "positional_embedding": "wrap",
-                "nn" : "fcnet"
+                "nn" : "siren",
+                "num_layers": 2
             },
             {
                 "use" : "True",
                 "positional_embedding": "wrap",
-                "nn" : "linear"
-            },
-
-
-            {
-                "use" : "True",
-                "positional_embedding": "cartesian3d",
-                "nn" : "fcnet"
+                "nn" : "siren",
+                "num_layers": 2
             },
             {
                 "use" : "True",
                 "positional_embedding": "cartesian3d",
-                "nn" : "linear"
-            },
-
-            {
-                "use" : "True",
-                "positional_embedding": "theory",
-                "nn" : "fcnet"
-            },
-            {
-                "use" : "True",
-                "positional_embedding": "theory",
-                "nn" : "linear"
-            },
-            
-            {
-                "use" : "True",
-                "type" : "siren",
-                "num_layers" : 1
-
-            },
-            {
-                "use" : "True",
-                "type" : "siren",
-                "num_layers" : 2
-
-            },          
-            {
-                "use" : "True",
-                "type" : "siren",
-                "num_layers" : 3
-
+                "nn" : "siren",
+                "num_layers": 2
             }
 
         ],   
@@ -172,7 +127,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "12/9 loc encoders all modalities"
+        "group": "23/9 loc encoder sirent + PE"
     }
 }
 

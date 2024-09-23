@@ -63,11 +63,11 @@
 
             {
                 "use" : "False",
-                "positional_embedding": "wrap"
+                "positional_embedding": "cartesian3d"
             },
             {
                 "use" : "True",
-                "positional_embedding": "wrap"
+                "positional_embedding": "cartesian3d"
             }
 
 
@@ -136,7 +136,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "18/9 modalities"
+        "group": "18/9 modalities cartesian3d"
     }
 }
 

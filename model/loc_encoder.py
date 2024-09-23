@@ -37,7 +37,7 @@ class LocationEncoder(nn.Module):
         if nn_type == 'fcnet':
             self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=kwargs['hyperparams']['embedding_dim'], feat_extractor_only=feat_extractor_only)
         elif nn_type == 'linear':
-            self.nn = nn.Linear(self.pe.embedding_dim, kwargs['hyperparams']['embedding_dim'] )
+            self.nn = nn.Linear(self.pe.embedding_dim, kwargs['hyperparams']['embedding_dim'])
 
 
     def forward(self, x):

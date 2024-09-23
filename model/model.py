@@ -60,6 +60,8 @@ def get_loc_encoder(config):
 
 
 
+
+
 def get_classifier(output_classes, config):
     """Get a module with a forward() that takes in a list of tokens
     and outputs class logits 
@@ -150,7 +152,7 @@ class MultiModalDriverClassifier(nn.Module):
         self.use_location = kwargs['hyperparams']['loc_encoder']['use']
         if self.use_location:
             self.loc_encoder = get_loc_encoder(kwargs)
-        
+            pdb.set_trace()
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']

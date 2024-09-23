@@ -54,7 +54,7 @@
             {
                 "use" : "True",
                 "positional_embedding": "wrap",
-                "nn" : "linear"
+                "nn" : "fcnet"
             }
 
         ],   
@@ -121,7 +121,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "13/9 tab on off"
+        "group": "20/9 tab on off using fc net with loc encoder"
     }
 }
 

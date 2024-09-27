@@ -51,6 +51,7 @@
 
         "loc_encoder": [
 
+
             {
                 "use" : "True",
                 "positional_embedding": "direct",
@@ -127,7 +128,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "23/9 loc encoder sirent + PE"
+        "group": "25/9 loc encoder sirent + PE"
     }
 }
 

@@ -53,8 +53,9 @@
 
             {
                 "use" : "True",
-                "positional_embedding": "direct",
-                "nn" : "linear"
+                "positional_embedding": "wrap",
+                "nn" : "siren",
+                "num_layers": 2
             }
 
         ],   

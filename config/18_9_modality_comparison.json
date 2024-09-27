@@ -63,11 +63,11 @@
 
             {
                 "use" : "False",
-                "positional_embedding": "cartesian3d"
+                "positional_embedding": "wrap"
             },
             {
                 "use" : "True",
-                "positional_embedding": "cartesian3d"
+                "positional_embedding": "wrap"
             }
 
 

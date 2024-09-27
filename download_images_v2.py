@@ -177,7 +177,8 @@ def get_patch(image, region, bands):
 
 def get_least_cloudy_patch(period, collection, coords, radius, bands):
 
-    aoi = ee.Geometry.Point(coords).buffer(radius).bounds()
+    #TODO: bounds() adds another buffer -> results in inprecisions; check if i can remove it 
+    aoi = ee.Geometry.Point(coords).buffer(radius).bounds() 
 
     limited_collection = filter_collection(collection, aoi, period)
     if limited_collection is None:

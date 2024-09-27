@@ -35,34 +35,8 @@ def get_image_encoder(config):
 
 def get_loc_encoder(config):
 
-
     return LocationEncoder(positional_embedding=config['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **config)
         
-
-
-def OLD_get_loc_encoder(config):
-
-    loc_enc_config = config['hyperparams']['loc_encoder']
-
-    try:
-        _type = loc_enc_config['type'].lower()
-        assert _type in ['siren', 'fc'], f'invalid loc enc option, allowed are "siren" or "fc", got: {_type}'
-    except KeyError: #For backwards compatibility
-        _type = 'fc'
-
-    if _type ==  "siren":
-    
-        return SirenNet(
-                dim_in=2, # it is 2 (lat,lon) because i don't use any PE()
-                dim_hidden=config['hyperparams']['embedding_dim'],
-                num_layers=loc_enc_config['num_layers'],
-                dim_out=config['hyperparams']['embedding_dim'],
-                dropout=loc_enc_config['dropout'] if "dropout" in loc_enc_config.keys() else False,
-                degreeinput=True
-            )
-    elif _type == 'fc':
-        return LocationEncoder(positional_embedding=config['hyperparams']['loc_encoder']['positional_embedding'], feat_extractor_only=True, **config)
-
 
 
 
@@ -148,7 +122,6 @@ class MultiModalDriverClassifier(nn.Module):
         self.use_forestloss = kwargs['hyperparams']['use_forestloss']
         self.embedding_dim = kwargs['hyperparams']['embedding_dim']
         self.classifier = get_classifier(output_classes, kwargs)
-
         self.use_image = kwargs['hyperparams']['image_encoder']['use']
         if self.use_image:
             self.image_encoder = get_image_encoder(kwargs)
@@ -156,13 +129,31 @@ class MultiModalDriverClassifier(nn.Module):
         self.use_location = kwargs['hyperparams']['loc_encoder']['use']
         if self.use_location:
             self.loc_encoder = get_loc_encoder(kwargs)
-            pdb.set_trace()
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:
             self.tabular_processing = kwargs['hyperparams']['tabular_encoder']['type']
             if self.tabular_processing == 'token':
                 if self.model_version == 'v1':
-                    self.tabular_encoder = nn.Linear(11, out_features=self.embedding_dim, bias = True)
+                    try:
+                        tab_layers = kwargs['hyperparams']['tabular_encoder']['num_layers']
+                    except KeyError:
+                        tab_layers = 1
+
+                    if tab_layers == 1:
+                        self.tabular_encoder = nn.Linear(11, out_features=self.embedding_dim, bias = True)
+                    elif tab_layers == 2:
+                        self.tabular_encoder = nn.Sequential(
+                            nn.Linear(11, int(self.embedding_dim/4), bias=True),
+                            nn.ReLU(), 
+                            nn.Linear(int(self.embedding_dim/4), self.embedding_dim, bias=True))                    
+                    elif tab_layers == 3:
+                        self.tabular_encoder = nn.Sequential(
+                            nn.Linear(11, int(self.embedding_dim/8), bias=True),
+                            nn.ReLU(), 
+                            nn.Linear(int(self.embedding_dim/8), int(self.embedding_dim/4), bias=True),
+                            nn.ReLU(),  
+                            nn.Linear(int(self.embedding_dim/4), self.embedding_dim, bias=True) )
+
                     try:
                         learn_missing_value = kwargs['hyperparams']['tabular_encoder']['learn_missing_value']
                     except KeyError:

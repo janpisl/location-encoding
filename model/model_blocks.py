@@ -275,19 +275,17 @@ class FullyConnectedClassifier(nn.Module):
     def __init__(self, output_classes, input_dimension, **config):
         super(FullyConnectedClassifier, self).__init__()
 
-        self.classifier = nn.Linear(input_dimension, out_features=output_classes, bias = True)
-
-        '''self.classifier = nn.Sequential(
+        #self.classifier = nn.Linear(input_dimension, out_features=output_classes, bias = True)
+        #Best based on tuning 
+        self.classifier = nn.Sequential(
             nn.Linear(input_dimension, int(input_dimension/2), bias=True),
             nn.ReLU(),  # Non-linear activation
-            nn.Linear(int(input_dimension/2), int(input_dimension/3), bias=True),
+            nn.Linear(int(input_dimension/2), int(input_dimension/4), bias=True),
             nn.ReLU(),  # Non-linear activation
-            nn.Linear(int(input_dimension/3), int(input_dimension/6), bias=True),
-            nn.ReLU(),  # Non-linear activation
-            nn.Linear(int(input_dimension/6), int(input_dimension/8), bias=True),
+            nn.Linear(int(input_dimension/4), int(input_dimension/8), bias=True),
             nn.ReLU(),  # Non-linear activation
             nn.Linear(int(input_dimension/8), output_classes, bias=True)
-        )'''
+        )
 
 
     def forward(self, tokens):

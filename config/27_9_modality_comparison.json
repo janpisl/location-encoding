@@ -2,7 +2,7 @@
     
 
     "data": {
-        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_grid_5_split.csv",
+        "annotation_file": "/home/jan/Documents/EPFL/project_2/data/labels/dataset_v5/labels_no_regrowth.csv",
         "image_folder": "/home/jan/Documents/EPFL/project_2/data/images/dataset_v5/four_images",
         "forestloss_folder": "/home/jan/Documents/EPFL/project_2/data/forestloss_tiles/dataset_v5",
         "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
@@ -11,54 +11,38 @@
     "num_workers" : 32,
 
     "hyperparams" :{
-        "seed": [420, 421, 422],
+        "seed": [420, 422, 423, 424, 425],
         "batch_size": [64],
         "learning_rate": [0.0005],
-        "epochs": [1000],
+        "epochs": [50],
         "weight_decay": [0.002],
         "randomize_labels": ["False"],
         "in_channels": [4],
         "use_forestloss" : ["True"],
-        "early_stopping_patience": [75],
+        "early_stopping_patience": [50],
+        "token_dropout" : [0],
+        "two_model_regularization"  : [ { "use" : "False"} ],
 
         "model_version": ["v1"],
 
         "embedding_dim" : [128],
-        "train_examples_per_class" : [10],
-
-        "two_model_regularization"  : [
-            {
-                "use" : "False"
-            },
-            {
-                "use" : "True",
-                "temperature": 0,
-                "metric" : "cosine_similarity"
-
-            },
-            {
-                "use" : "True",
-                "temperature": 0.01,
-                "metric" : "cosine_similarity"
-
-            },       
-            {
-                "use" : "True",
-                "temperature": 0.05,
-                "metric" : "cosine_similarity"
-
-            },   
-            {
-                "use" : "True",
-                "temperature": 0.1,
-                "metric" : "cosine_similarity"
-
-            } 
-        ],
+        "train_dataset_total_size" : [100, 200, 500, 1000, 2000, 5000, 10000],
+        "n_images" : [4],
+        
+        
         
 
         "image_encoder": [
 
+            {
+                "use" : "False",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze_after": 30,
+                "learning_rate": 0.001
+            },
 
             {
                 "use" : "True",
@@ -76,27 +60,29 @@
 
         "loc_encoder": [
 
+
             {
                 "use" : "False",
-                "positional_embedding": "cartesian3d"
+                "positional_embedding": "wrap",
+                "nn" : "linear"
             },
             {
                 "use" : "True",
-                "positional_embedding": "cartesian3d"
+                "positional_embedding": "wrap",
+                "nn" : "linear"
             }
+
 
 
         ],   
 
         "tabular_encoder": [
-
-
             {
                 "use" : "False",
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic",
-                "dropout" : 0
+                "dropout" : 0.2
 
             },
             {
@@ -104,23 +90,10 @@
                 "dataset" : "deduce",
                 "type" : "token",
                 "temporal_processing" : "dynamic",
-                "dropout" : 0
+                "dropout" : 0.2
 
-            },
-            {
-                "use" : "True",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic",
-                "dropout" : 0.15
-            },
-            {
-                "use" : "True",
-                "dataset" : "deduce",
-                "type" : "token",
-                "temporal_processing" : "dynamic",
-                "dropout" : 0.3
-            }
+            }      
+            
 
         ],
 
@@ -131,11 +104,10 @@
                 "type" : "transformer",
                 "transformer_layers": 3,
                 "attention_heads":8
-            }             
+            }   
         ],
 
         "folds_to_split" : [
-
 
             {
                 "column" : "split",
@@ -166,6 +138,7 @@
         "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "22/6 new features test"
+        "group": "27/9 modalities "
     }
 }
+

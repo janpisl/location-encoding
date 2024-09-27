@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+from model.model_blocks import Identity
 from model.positional_embeddings import *
 from model.siren import SirenNet
 
@@ -22,19 +23,17 @@ class LocationEncoder(nn.Module):
             self.pe = Wrap()
         elif  positional_embedding == 'theory':
             self.pe = Theory() 
-        
+        elif  positional_embedding == 'none':
+            self.pe = Identity() 
+            self.pe.embedding_dim = 2
         else:
             raise ValueError(f"Unrecognized PE() method: {positional_embedding}")
         
         if not output_classes:
             assert feat_extractor_only
-            
-        try:
-            nn_type = kwargs['hyperparams']['loc_encoder']['nn'].lower()
-            assert nn_type in ['fcnet', 'linear']
-        except (KeyError, AssertionError):
-            nn_type = 'fcnet'
-        
+
+        nn_type = kwargs['hyperparams']['loc_encoder']['nn'].lower()
+        assert nn_type == 'linear', "'linear' has been selected as the final nn for loc encoding"
         if nn_type == 'fcnet':
             self.nn = FCNet(self.pe.embedding_dim, num_classes=output_classes, dim_hidden=kwargs['hyperparams']['embedding_dim'], feat_extractor_only=feat_extractor_only)
         elif nn_type == 'linear':
@@ -42,12 +41,12 @@ class LocationEncoder(nn.Module):
         elif nn_type == 'siren':
             assert 'num_layers' in kwargs['hyperparams']['loc_encoder'].keys(), 'Must specify number of layers for SIREN'
             self.nn = SirenNet(
-                dim_in=self.pe.embedding_dim, # it is 2 (lat,lon) because i don't use any PE()
+                dim_in=self.pe.embedding_dim, 
                 dim_hidden=kwargs['hyperparams']['embedding_dim'],
                 num_layers=kwargs['hyperparams']['loc_encoder']['num_layers'],
                 dim_out=kwargs['hyperparams']['embedding_dim'],
                 dropout=False,
-                degreeinput=True
+                degreeinput=False
             )
         else:
             raise ValueError(f"Unrecognized loc encoder nn type: '{nn_type}'")

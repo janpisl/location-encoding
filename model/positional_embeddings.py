@@ -42,7 +42,7 @@ class Wrap(nn.Module):
 
 
 class Cartesian3D(nn.Module):
-    def __init__(self):
+    def __init__(self,):
         super(Cartesian3D, self).__init__()
 
         # adding this class variable is important to determine

@@ -55,7 +55,8 @@
 
             {
                 "use" : "True",
-                "positional_embedding": "wrap"
+                "positional_embedding": "wrap",
+                "nn" : "linear"
             }
 
 
@@ -79,9 +80,10 @@
         
         "classifier": [
 
-
             {
-                "type" : "fc-5layers"
+                "type" : "transformer",
+                "transformer_layers": 3,
+                "attention_heads":8
             }
         ],
 
@@ -113,10 +115,10 @@
     },
 
     "wandb": {
-        "log_to_wandb" : "True",
+        "log_to_wandb" : "False",
         "project" : "project_2",
         "entity" : "janpisl",
-        "group": "16/9 cls type"
+        "group": "25/9 cls type"
     }
 }
 

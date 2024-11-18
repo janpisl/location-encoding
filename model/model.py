@@ -163,7 +163,7 @@ class MultiModalDriverClassifier(nn.Module):
                         torch.nn.init.normal_(self.missing_tab_value_token, std=1e-5)
                     else:
                         self.missing_tab_value_token = 0.
-                elif self.model_version == 'v2':
+                elif self.model_version in ['v2', 'v3']:
                     self.tabular_encoder = TabularEncoder(out_dim=self.embedding_dim)
                     
     
@@ -190,10 +190,10 @@ class MultiModalDriverClassifier(nn.Module):
                 elif self.tabular_processing == 'country_id' and isinstance(self.classifier, TransformerClassifier):
                     tabular_data = tabular_data.unsqueeze(1)
                     tabular_data = tabular_data.repeat(1, self.embedding_dim)
-            elif self.model_version == 'v2':
+            elif self.model_version in ['v2', 'v3']:
                 tabular_data = self.tabular_encoder(tabular_data)
             features.append(tabular_data)
-
+        
         #Get all tokens in shape NxBxD and concat them together into a tensor of NxBxD (num_tokens, batch, embed_dim)
         tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in features], dim=0)
         

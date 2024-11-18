@@ -29,17 +29,6 @@ from model.model import MultiModalDriverClassifier
 from model.loss import TabRegularizationLoss
 
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='data/64x64_SIGNS',
-                    help="Directory containing the dataset")
-parser.add_argument('--model_dir', default='experiments/base_model',
-                    help="Directory containing params.json")
-parser.add_argument('--restore_file', default=None,
-                    help="Optional, name of the file in --model_dir containing weights to reload before \
-                    training")  # 'best' or 'train'
-
-
 def train(model, optimizer, loss_fn, dataloader, device, config, custom_regularization):
     """Train the model for one epoch
 
@@ -300,6 +289,7 @@ def main(config):
     except KeyError:
         regularization = False
 
+    
     if regularization:
         assert config['hyperparams']['tabular_encoder']['use'], "Tabular data needed for two-model regularization"
         loss_fn = TabRegularizationLoss(temperature=config['hyperparams']['two_model_regularization']['temperature'], regularization_method=config['hyperparams']['two_model_regularization']['metric'])
@@ -344,9 +334,7 @@ if __name__ == '__main__':
         main(config)'''
 
     #skip = True
-    
     for i, variant in enumerate(permutations_dicts):
-        
         #if variant['seed'] == 421 and variant['train_examples_per_class'] == 1000 and variant['model_version'] == 'v1' and variant['tabular_encoder']['use'] == 'True' and variant['folds_to_split']['mapping']['0'] == 'val':
         #    skip = False
         #    print(i)

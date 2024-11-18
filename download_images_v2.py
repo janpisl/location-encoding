@@ -5,16 +5,15 @@ This script downloads images from Earth Engine according to given parameters.
 
 Example of use:
 
-python download_images_v2.py   --save_path data/images/dataset_v5/twelve_images\
-    --sample_points_path data/labels/dataset_v5/labels_grid_5_split_no_masolele.csv\
+python download_images_v2.py   --save_path data/images/tmp\
+    --sample_points_path data/labels/dataset_v5/labels_no_regrowth.csv\
     --bands S2\
-    --start_date 2023-01-01\
-    --end_date 2024-01-01\
+    --start_date 2022-01-01\
+    --end_date 2023-01-01\
     --num_workers 32 \
-    --period_length 1M\
+    --period_length 3M\
     --buffer 550\
     --target_shape 110 110
-
 '''
 
 import argparse
@@ -382,6 +381,8 @@ if __name__ == '__main__':
     buffer = args.buffer    
     collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
 
+
+    
     sampler = ShapeFileSampler(args.sample_points_path)
     start_index = sampler.index
     end_index = sampler.points.index[-1] + 1

@@ -12,7 +12,6 @@ import geopandas as gpd
 from scipy.ndimage import gaussian_filter
 
 
-
 LABEL_MAPPING = {
     'pasture' : 0, 
     'forest plantation' : 1,
@@ -26,6 +25,41 @@ LABEL_MAPPING = {
     'shifting agriculture': 9,
     'other': 10 
 }
+
+
+LABEL_MAPPING_EXTENDED = {
+    'pasture' : 0, 
+    
+    'forest plantation' : 1,
+    'fruit plantation': 1, #? maybe it should be 'other'?
+    
+    'soy' : 2,
+    'coffee' : 3,
+    'palm oil': 4,
+    'mining': 5,
+    'urban': 6,
+    'cocoa': 7,
+    'rubber': 8,
+    
+    'shifting agriculture': 9,
+    'agri/other crops/orchards' : 9,
+    
+    'mangrove' : 10,
+    'other': 10,
+    'dense forest': 10,
+    'light forest': 10,
+    'forest gallery': 10,
+    'secondary forest': 10,
+    'swamp forest': 10,
+    'cashew': 10,
+    'coconut' : 10,
+    'rocky outcrop': 10,
+    'swamp': 10,
+    'water' : 10,
+    'shrub': 10,
+    'herbaceous': 10,
+    'tree savannah': 10
+    }
 
 FOREST_LOSS_YEAR_RANGE = 2000, 2020
 
@@ -55,7 +89,6 @@ class DriverDataset(Dataset):
         self.use_forestloss = kwargs['hyperparams']['use_forestloss']
         self.forestloss_dir = kwargs['data']['forestloss_folder']
         self.forestloss_transform = kwargs['forestloss_transform']
-
 
         self.use_tabular = kwargs['hyperparams']['tabular_encoder']['use']
         if self.use_tabular:
@@ -218,11 +251,16 @@ class DriverDataset(Dataset):
         except:
             print(self.img_labels.iloc[idx])
         class_name = self.img_labels.driver.iloc[idx]
-        label = LABEL_MAPPING[class_name]
-
+        try:
+            label = LABEL_MAPPING[class_name]  
+        except KeyError: 
+            label =  LABEL_MAPPING_EXTENDED[class_name]  
+        
         #Get location as a tensor
         lat, lon = self.img_labels.iloc[idx].geometry.y, self.img_labels.iloc[idx].geometry.x
         loc = torch.Tensor([lat, lon])
+        ### TMP
+        loc = loc + torch.randn(2)*0.4  # generates random noise of shape (2,)
 
         if self.transform and self.use_image:
             image_data = self.transform(image_data)

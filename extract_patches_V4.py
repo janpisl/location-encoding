@@ -29,7 +29,7 @@ def load_dataset(dataset_name):
         
 
     elif dataset_name == 'mapbiomas':
-        mapbiomas_path = '/home/jan/Documents/EPFL/drivers/data/mapbiomas/brasil_coverage_2022.tif'
+        mapbiomas_path = '/home/jan/Documents/EPFL/project_2/data/input_datasets/brasil_coverage_2022.tif'
         with rasterio.open(mapbiomas_path) as src:
             dataset_extent = box(*src.bounds)
         label_gdf = gpd.GeoDataFrame({'geometry' : [dataset_extent], 'filename': [mapbiomas_path]})
@@ -568,7 +568,7 @@ def main(
 if __name__ == '__main__':
 
     print('starting')
-    target_years = list(range(2000, 2020))
+    target_years = list(range(2018, 2020))
 
     patch_rows, patch_cols = 33, 33 #as close as possible to 1km square
     min_px_forest_loss = 15 #Pixel size is 30x30m;
@@ -577,13 +577,15 @@ if __name__ == '__main__':
 
     forestloss_dir = '../Vancutsem_yearloss'
     forestloss_tiles = get_tiles_as_gdf(forestloss_dir)
-    output_dir = 'data/labels/dataset_v5'
+    #output_dir = 'data/labels/dataset_v5'
+    output_dir = '../Picterra/localito/data/forestloss_after_2018'
+
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     datasets = [
-        #'cocoa_peru_points',
+        'cocoa_peru_points',
         'manual_annotation',
-        #'mapbiomas_bolivia',
+        'mapbiomas_bolivia',
         #'africa_masolele',
         'colombia_pasture',
         'mapbiomas_paraguay',
@@ -591,14 +593,14 @@ if __name__ == '__main__':
         'rubber',
         'cocoa',
         'mapbiomas',
-        'vancutsem_regrowth',
+        #'vancutsem_regrowth',
         'coffee_maskell',
         'mapbiomas_indonesia',
         'palm_oil', 
         'worldcover',
         'coffee_sdpt_brazil', 
         'cocoa_ecuador',
-        'tyukavina_congo_basin_agri',
+        'tyukavina_congo_basin_agri', 
         'mines',
         'soy_south_america',
         'mapbiomas_peru',
@@ -607,8 +609,8 @@ if __name__ == '__main__':
 
 
     for dataset in datasets:
-        if not dataset == 'manual_annotation':
-            continue
+        #if dataset == 'manual_annotation':
+        #    continue
         if dataset in ['manual_annotation', 'africa_masolele', 'coffee_sdpt_brazil']:
             extract_max_patches = True
         else:

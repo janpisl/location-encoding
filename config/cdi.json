@@ -1,0 +1,119 @@
+{
+
+    "data": {
+        "annotation_file": "/home/jan/Documents/EPFL/Picterra/localito/data/labels/cotedivoire/merged_with_training_labels.csv",
+        "image_folder": "/home/jan/Documents/EPFL/Picterra/localito/data/images/SR/cotedivoire",
+        "forestloss_folder": "/home/jan/Documents/EPFL/Picterra/localito/data/forestloss_patches/cotedivoire/",
+        "deduce_data": "/home/jan/Documents/EPFL/project_2/data/tabular/deduce_yearly.csv",
+
+        "output_folder":  "models_trained/"
+    },
+    "num_workers" : 32,
+
+    "hyperparams" :{
+        "seed": [421],
+
+
+        "train_dataset_total_size" : [10000],
+
+        "batch_size": [64],
+        "learning_rate": [0.0005],
+        "epochs": [30],
+        "weight_decay": [0.002],
+        "randomize_labels": ["False"],
+        "use_forestloss" : ["True"],
+        "token_dropout" : [0, 0.2],
+
+        "in_channels": [4],
+        "embedding_dim": [128], 
+        "early_stopping_patience": [50],
+        "n_images" : [4],
+        "two_model_regularization"  : [ 
+            { "use" : "False"} ,
+            { "use" : "True",  "metric":  "cosine_similarity", "temperature": 0.5}    
+        ],
+        "model_version": ["v1", "v2", "v3"],
+
+        "image_encoder": [
+            {
+                "use" : "True",
+                "type" : "cnn",
+                "backbone": "resnet18",
+                "pretrained_backbone" : "True",
+                "moco_weights" : "False",
+                "freeze_after": 50,
+                "learning_rate": 0.001
+            } 
+
+
+        ],
+
+        "loc_encoder": [
+          
+
+            {
+                "use" : "True",
+                "positional_embedding": "wrap",
+                "nn" : "fcnet"
+            }             
+ 
+        ],   
+
+        "tabular_encoder": [
+
+            {
+                "use" : "True",
+                "dataset" : "deduce",
+                "type" : "token",
+                "temporal_processing" : "dynamic",
+                "dropout" : 0.2
+
+            }      
+        ],
+
+        
+        "classifier": [
+
+            {
+                "type" : "transformer",
+                "transformer_layers": 3,
+                "attention_heads":8
+            }             
+        ],
+
+        "folds_to_split" : [
+
+            {
+                "column" : "split",
+                "mapping"  : {
+                    "0" : "train",
+                    "1" : "train",
+                    "2" : "train",
+                    "3" : "train",
+                    "4" : "train",
+                    "99" : "val"
+                }
+            }
+
+
+        ],
+
+        "forestloss_params": [
+            {
+                "kernel_size" : 15,
+                "sigma" : 6,
+                "apply_after_layer" : 3
+            }
+        ]
+
+
+    },
+
+    "wandb": {
+        "log_to_wandb" : "True",
+        "project" : "localito",
+        "entity" : "janpisl",
+        "group": "15/10"
+    }
+}
+

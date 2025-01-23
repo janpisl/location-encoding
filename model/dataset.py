@@ -260,7 +260,7 @@ class DriverDataset(Dataset):
         lat, lon = self.img_labels.iloc[idx].geometry.y, self.img_labels.iloc[idx].geometry.x
         loc = torch.Tensor([lat, lon])
         ### TMP
-        loc = loc + torch.randn(2)*0.4  # generates random noise of shape (2,)
+        #loc = loc + torch.randn(2)*0.4  # generates random noise of shape (2,)
 
         if self.transform and self.use_image:
             image_data = self.transform(image_data)

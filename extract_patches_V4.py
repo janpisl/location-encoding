@@ -425,7 +425,7 @@ def extract_patches(
                         forestloss_data.shape[0],
                         forestloss_data.shape[1]  
                     ),
-                resampling=Resampling.bilinear,
+                #resampling=Resampling.bilinear,
                     window=label_window)
 
                 
@@ -558,7 +558,7 @@ def main(
 
     df.to_csv(os.path.join(output_dir, f'{dataset}.csv'), index=False)
 
-    gdf.to_file(f'data/tmp/dst_v5/{dataset}.gpkg')
+    #gdf.to_file(f'data/tmp/dst_v5/{dataset}.gpkg')
 
 
 
@@ -568,7 +568,7 @@ def main(
 if __name__ == '__main__':
 
     print('starting')
-    target_years = list(range(2018, 2020))
+    target_years = list(range(2000, 2020))
 
     patch_rows, patch_cols = 33, 33 #as close as possible to 1km square
     min_px_forest_loss = 15 #Pixel size is 30x30m;
@@ -578,7 +578,7 @@ if __name__ == '__main__':
     forestloss_dir = '../Vancutsem_yearloss'
     forestloss_tiles = get_tiles_as_gdf(forestloss_dir)
     #output_dir = 'data/labels/dataset_v5'
-    output_dir = '../Picterra/localito/data/forestloss_after_2018'
+    output_dir = '../Picterra/localito/data/misc/test_data_extraction/no_bilinear'
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 

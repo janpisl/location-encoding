@@ -3,12 +3,17 @@ models_trained/
 wandb/
 __pycache__/
 */__pycache__/
-misc/
-paper/
+misc/*
+paper/*
 
 */.ipynb_checkpoints/
 
 last_idx.txt
 logs*
+n_images.sh
+exec.sh
+del.py
+
+
 
 */*pickle

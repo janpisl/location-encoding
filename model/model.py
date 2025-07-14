@@ -155,13 +155,15 @@ class MultiModalDriverClassifier(nn.Module):
     
     def forward(self, image_data, location, tabular_data, forestloss_patch=None, dropout=0.):
         
+        batch = image_data.shape[0]
+
         if self.use_image:
             if self.use_forestloss:
                 image_features = self.image_encoder(image_data, forestloss_patch)
             else:
                 image_features = self.image_encoder(image_data, None)
 
-            image_features = image_features.permute(1, 2, 0).reshape(1, 64, 4 * 128)
+            image_features = image_features.permute(1, 2, 0).reshape(1, batch, 4 * 128)
             features = [image_features]
             
         else:

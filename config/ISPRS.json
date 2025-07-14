@@ -96,7 +96,7 @@
         "forestloss_params": [
             {
                 "kernel_size" : 15,
-                "sigma" : 6,
+                "sigma" : 6,  
                 "apply_after_layer" : 3
             }
         ]
@@ -105,7 +105,7 @@
     },
 
     "wandb": {
-        "log_to_wandb" : "False",
+        "log_to_wandb" : "True",
         "project" : "project_2",
         "entity" : "janpisl",
         "group": "1/7 ISPRS review"

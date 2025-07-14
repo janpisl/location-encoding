@@ -121,7 +121,10 @@ class MultiModalDriverClassifier(nn.Module):
 
         self.use_forestloss = kwargs['hyperparams']['use_forestloss']
         self.embedding_dim = kwargs['hyperparams']['embedding_dim']
-        self.classifier = get_classifier(output_classes, kwargs)
+        self.classifier_img = FullyConnectedClassifier(output_classes, input_dimension=4*128)
+        self.classifier_loc = FullyConnectedClassifier(output_classes, input_dimension=128)
+        self.classifier_tab = FullyConnectedClassifier(output_classes, input_dimension=128)
+
         self.use_image = kwargs['hyperparams']['image_encoder']['use']
         if self.use_image:
             self.image_encoder = get_image_encoder(kwargs)
@@ -192,15 +195,16 @@ class MultiModalDriverClassifier(nn.Module):
                     tabular_data = tabular_data.repeat(1, self.embedding_dim)
             elif self.model_version in ['v2', 'v3']:
                 tabular_data = self.tabular_encoder(tabular_data)
-            features.append(tabular_data)
-        
-        #Get all tokens in shape NxBxD and concat them together into a tensor of NxBxD (num_tokens, batch, embed_dim)
-        tokens = torch.cat([token if len(token.shape) == 3 else token.unsqueeze(dim=0) for token in features], dim=0)
-        
-        mask = torch.rand(tokens.size(0)) > dropout
-        tokens = tokens[mask]
+ 
+        #TODO: needs to be of shape batch, features
+        batch = image_data.shape[0]
+        image_features = image_features.permute(1, 2, 0).reshape(1, batch, 4 * 128).squeeze()
+        predictions_img = self.classifier_img(image_features)
+        predictions_loc = self.classifier_loc(loc_features)
+        predictions_tab = self.classifier_tab(tabular_data)
 
-        predictions = self.classifier(tokens)
+
+        predictions = torch.stack([predictions_img,predictions_loc, predictions_tab ]).mean(dim=1)
 
 
         return predictions

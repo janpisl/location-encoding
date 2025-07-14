@@ -302,18 +302,7 @@ class FullyConnectedClassifier(nn.Module):
         tokens.view(batch_size, embedding_dim*n_tokens)
         '''
         #TODO: this is pretty stupid but i can't figure out the normal way to do it atm
-        processed_tokens = []
-        for token in tokens:
-            if len(token.shape) == 1:
-                processed_tokens.append(token.unsqueeze(1))
-            if len(token.shape) == 2:
-                processed_tokens.append(token)
-            elif len(token.shape) == 3:
-                token = [i for i in token]
-                for i in token:
-                    processed_tokens.append(i)
-        
-        tokens = torch.cat(processed_tokens, dim=1)
+
 
         return self.classifier(tokens)
 

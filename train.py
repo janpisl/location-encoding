@@ -341,7 +341,18 @@ if __name__ == '__main__':
         #if skip:
         #    continue
         #    
+
+            
+        config['hyperparams'] = variant
+        utils.seed_everything(config['hyperparams']['seed'])
+        config = utils.parse_boolean_recursion(config)
+
         try:
+            wandb.finish()
+        except:
+            pass
+        main(config)
+        """try:
             
             config['hyperparams'] = variant
             utils.seed_everything(config['hyperparams']['seed'])
@@ -355,7 +366,7 @@ if __name__ == '__main__':
         except Exception as e:
             text =  pprint.pformat(config) + '\nError message:\n' + repr(e)  + '\n\n\n'
             with open(f"logs_{datetime.today().strftime('%m_%d')}.txt", "a") as sink:
-                sink.write(text)
+                sink.write(text)"""
 
 
 

@@ -326,12 +326,12 @@ if __name__ == '__main__':
         permutations_dicts = [dict(config['hyperparams'])]
     print(f"{len(permutations_dicts)} variant(s) of config")
 
-    '''for variant in permutations_dicts:
+    for variant in permutations_dicts:
         
         config['hyperparams'] = variant
         utils.seed_everything(config['hyperparams']['seed'])
         config = utils.parse_boolean_recursion(config)
-        main(config)'''
+        main(config)
 
     #skip = True
     for i, variant in enumerate(permutations_dicts):

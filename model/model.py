@@ -204,7 +204,7 @@ class MultiModalDriverClassifier(nn.Module):
         predictions_tab = self.classifier_tab(tabular_data)
 
 
-        predictions = torch.stack([predictions_img,predictions_loc, predictions_tab ]).mean(dim=1)
+        predictions = torch.stack([predictions_img,predictions_loc, predictions_tab ]).mean(dim=0)
 
 
         return predictions

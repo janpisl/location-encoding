@@ -6,7 +6,7 @@ location-aware deep learning*](https://www.sciencedirect.com/science/article/pii
 
 A multi-modal Transformer that classifies post-deforestation land use from a Sentinel-2
 image time series, geographic coordinates, and country-level deforestation statistics.
-See the [paper](https://www.sciencedirect.com/science/article/pii/S0924271625004915) for
+See the paper for
 the method and results.
 
 ## Contents
@@ -37,8 +37,8 @@ the method and results.
     ├── model.py             The multi-modal model
     ├── model_blocks.py      Image encoder, tabular encoder, Transformer classifier
     ├── loc_encoder.py       Location encoder (positional embedding + network)
-    ├── positional_embeddings.py   Positional embeddings
-    ├── siren.py             SIREN network
+    ├── positional_embeddings.py
+    ├── siren.py
     ├── dataset.py           Loads images, location, tabular data, and deforestation mask
     ├── dataloader.py        Dataloaders, transforms, and train/val/test splitting
     └── loss.py              Cross-entropy and tabular regularization loss
@@ -59,26 +59,21 @@ Training runs on GPU if available and falls back to CPU otherwise.
 ## The PLUTo dataset
 
 Training and evaluation use the Post-deforestation Land Use in the Tropics (PLUTo)
-dataset, compiled from 19 public sources and released separately:
+dataset, released separately at:
 
 **https://zenodo.org/records/17831353**
 
-PLUTo contains 14,755 samples (10,000 train, 4,755 test) of locations deforested between
-2000 and 2020 across more than 60 countries. Deforestation is taken from the Tropical
-Moist Forest (TMF) dataset. Each sample covers a 1 km² patch and contains:
+Each sample covers a 1 km² deforested patch and consists of:
 
 - a time series of four Sentinel-2 images (RGB + near-infrared, 10 m resolution),
-- a deforestation mask from TMF,
+- a deforestation mask from the TMF dataset,
 - the latitude/longitude of the patch centre,
-- 11 values (one per class) from the DeDuCE dataset, giving the deforestation attributed
-  to each class for the country, with a placeholder where data is missing,
-- one land-use class, used as the label.
+- 11 values from the DeDuCE dataset (one per class), the deforestation attributed to each
+  class for the patch's country,
+- a land-use class label (one of eleven classes).
 
-The train/test split is geographic. The study area is divided into 5°×5° blocks and 12
-blocks are held out for testing, chosen so that Cambodia falls entirely within the test
-set. Training blocks are split into four folds for cross-validation.
-
-The eleven classes and their sample counts are in Table 1 of the paper.
+The split into train, validation, and test folds is geographic. See the paper for the
+dataset construction, class list, and statistics.
 
 ## Data setup
 
@@ -136,10 +131,9 @@ with `model.dataloader.fetch_dataloader`, and call `evaluate`. The split is sele
 
 ## Model and configuration
 
-The model (`model/model.py`) encodes each modality into a fixed-size token, prepends a
-learnable `CLS` token, fuses the tokens with a Transformer encoder, and classifies the
-`CLS` output with a fully connected layer. Each modality can be switched on or off, and
-each encoder is configurable:
+The model (`model/model.py`) encodes each modality with its own encoder and fuses them
+with a Transformer. Each modality can be switched on or off, and each encoder is
+configurable:
 
 | Modality | Config key | Options |
 |---|---|---|
@@ -149,10 +143,7 @@ each encoder is configurable:
 | Tabular | `tabular_encoder` | `dataset` (`deduce`), `type` (`token`), `temporal_processing` (`static`, `dynamic`) |
 | Fusion | `classifier` | `type` (`transformer`, `fc`), `transformer_layers`, `attention_heads` |
 
-The deforestation mask has no encoder of its own. It is binarized, blurred, downsampled,
-and multiplied into a ResNet feature map (`apply_after_layer`) to direct the image
-encoder to the deforested area. The final model's configuration is in
-`config/example.json`.
+The configuration of the final model from the paper is in `config/example.json`.
 
 ## Citation
 

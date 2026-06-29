@@ -5,3 +5,9 @@ tqdm
 torchvision
 pandas
 geopandas
+rasterio
+scipy
+scikit-learn
+torchmetrics
+matplotlib
+wandb
